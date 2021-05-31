@@ -1,0 +1,12 @@
+{
+	"type": "deathswap:death_swap",
+	"translation": "game.deathswap.nether_death_swap",
+	"map": {
+		"settings": "minecraft:nether"
+	},
+	"players": {
+		"min": 1,
+		"max": 32,
+		"threshold": 4
+	}
+}

@@ -1,0 +1,25 @@
+{
+	"schemaVersion": 1,
+	"id": "deathswap",
+	"version": "${version}",
+	"name": "Death Swap",
+	"description": "A hazard construction minigame for Minecraft.",
+	"authors": [
+		"haykam821"
+	],
+	"contact": {
+		"homepage": "https://github.com/haykam821/Death-Swap#readme",
+		"issues": "https://github.com/haykam821/Death-Swap/issues"
+	},
+	"entrypoints": {
+		"main": [
+			"io.github.haykam821.deathswap.Main"
+		]
+	},
+	"license": "MIT",
+	"icon": "assets/deathswap/icon.png",
+	"depends": {
+		"fabricloader": ">=0.4.0",
+		"plasmid": ">=0.4.21"
+	}
+}

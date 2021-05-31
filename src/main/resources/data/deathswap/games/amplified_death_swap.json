@@ -1,0 +1,12 @@
+{
+	"type": "deathswap:death_swap",
+	"translation": "game.deathswap.amplified_death_swap",
+	"map": {
+		"settings": "minecraft:amplified"
+	},
+	"players": {
+		"min": 1,
+		"max": 32,
+		"threshold": 4
+	}
+}
