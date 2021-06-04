@@ -1,5 +1,8 @@
 package io.github.haykam821.deathswap.game;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.common.collect.Iterables;
 
 import io.github.haykam821.deathswap.game.phase.DeathSwapActivePhase;
@@ -9,6 +12,7 @@ import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.widget.BossBarWidget;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
@@ -43,21 +47,30 @@ public class DeathSwapTimer {
 	}
 
 	private void swap() {
+		// Collect new positions for each player
+		List<Vec3d> positions = new ArrayList<>(this.phase.getPlayers().size());
+
 		ServerPlayerEntity previousPlayer = Iterables.getLast(this.phase.getPlayers());
-		double previousX = previousPlayer.getX();
-		double previousY = previousPlayer.getY();
-		double previousZ = previousPlayer.getZ();
+		positions.add(previousPlayer.getPos());
 		
 		for (ServerPlayerEntity player : this.phase.getPlayers()) {
-			player.teleport(previousX, previousY, previousZ);
+			// Ensure positions are off by one
+			if (player != previousPlayer) {
+				positions.add(player.getPos());
+			}
+		}
+
+		// Teleport players to their new positions
+		int index = 0;
+		for (ServerPlayerEntity player : this.phase.getPlayers()) {
+			Vec3d position = positions.get(index);
+			player.teleport(position.getX(), position.getY(), position.getZ());
 
 			Text message = new TranslatableText("text.deathswap.timer.swap", previousPlayer.getDisplayName()).formatted(NO_SWAP_FORMATTING);
 			player.sendMessage(message, true);
 
 			previousPlayer = player;
-			previousX = player.getX();
-			previousY = player.getY();
-			previousZ = player.getZ();
+			index += 1;
 		} 
 
 		this.swapTicks = this.phase.getConfig().getSwapTicks();
