@@ -1,6 +1,8 @@
 package io.github.haykam821.deathswap.game.map;
 
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.server.MinecraftServer;
@@ -8,10 +10,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.registry.BuiltinRegistries;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.BlockView;
 import net.minecraft.world.ChunkRegion;
+import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.Heightmap;
-import net.minecraft.world.WorldAccess;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.BiomeSource;
@@ -23,6 +24,7 @@ import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
+import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import xyz.nucleoid.plasmid.game.world.generator.GameChunkGenerator;
 
 public final class DeathSwapChunkGenerator extends GameChunkGenerator {
@@ -60,8 +62,8 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 
 	@Override
 	public void populateEntities(ChunkRegion region) {
-		int chunkX = region.getCenterChunkX();
-		int chunkZ = region.getCenterChunkZ();
+		int chunkX = region.getCenterPos().x;
+		int chunkZ = region.getCenterPos().z;
 
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		if (this.isChunkPosWithinArea(chunkPos)) {
@@ -72,10 +74,11 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	}
 
 	@Override
-	public void populateNoise(WorldAccess world, StructureAccessor structures, Chunk chunk) {
+	public CompletableFuture<Chunk> populateNoise(Executor executor, StructureAccessor structures, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.populateNoise(world, structures, chunk);
+			return this.chunkGenerator.populateNoise(executor, structures, chunk);
 		}
+		return super.populateNoise(executor, structures, chunk);
 	}
 
 	@Override
@@ -92,8 +95,8 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 
 	@Override
 	public void generateFeatures(ChunkRegion region, StructureAccessor structures) {
-		int chunkX = region.getCenterChunkX();
-		int chunkZ = region.getCenterChunkZ();
+		int chunkX = region.getCenterPos().x;
+		int chunkZ = region.getCenterPos().z;
 
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		if (!this.isChunkPosWithinArea(chunkPos)) return;
@@ -184,18 +187,18 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	}
 
 	@Override
-	public int getHeight(int x, int z, Heightmap.Type heightmapType) {
+	public int getHeight(int x, int z, Heightmap.Type heightmapType, HeightLimitView world) {
 		if (this.isChunkPosWithinArea(new ChunkPos(x >> 4, z >> 4))) {
-			return this.chunkGenerator.getHeight(x, z, heightmapType);
+			return this.chunkGenerator.getHeight(x, z, heightmapType, world);
 		}
-		return super.getHeight(x, z, heightmapType);
+		return super.getHeight(x, z, heightmapType, world);
 	}
 
 	@Override
-	public BlockView getColumnSample(int x, int z) {
+	public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world) {
 		if (this.isChunkPosWithinArea(new ChunkPos(x >> 4, z >> 4))) {
-			return this.chunkGenerator.getColumnSample(x, z);
+			return this.chunkGenerator.getColumnSample(x, z, world);
 		}
-		return super.getColumnSample(x, z);
+		return super.getColumnSample(x, z, world);
 	}
 }

@@ -18,66 +18,69 @@ import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.Heightmap;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.event.GameOpenListener;
-import xyz.nucleoid.plasmid.game.event.GameTickListener;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
-import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.widget.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.game.player.PlayerOffer;
+import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
+import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
-public class DeathSwapActivePhase implements GameOpenListener, GameTickListener, PlayerAddListener, PlayerDeathListener, PlayerRemoveListener {
+public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActivityEvents.Tick, GamePlayerEvents.Offer, PlayerDeathEvent, GamePlayerEvents.Remove {
 	private final GameSpace gameSpace;
+	private final ServerWorld world;
 	private final DeathSwapMap map;
 	private final DeathSwapConfig config;
 	private final Set<ServerPlayerEntity> players;
 	private final DeathSwapTimer timer;
 	private boolean singleplayer;
 
-	public DeathSwapActivePhase(GameSpace gameSpace, GlobalWidgets widgets, DeathSwapMap map, DeathSwapConfig config, Set<ServerPlayerEntity> players) {
+	public DeathSwapActivePhase(GameSpace gameSpace, ServerWorld world, GlobalWidgets widgets, DeathSwapMap map, DeathSwapConfig config, Set<ServerPlayerEntity> players) {
 		this.gameSpace = gameSpace;
+		this.world = world;
 		this.map = map;
 		this.config = config;
 		this.timer = new DeathSwapTimer(this, widgets);
 		this.players = players;
 	}
 
-	public static void open(GameSpace gameSpace, DeathSwapMap map, DeathSwapConfig config) {
-		gameSpace.openGame(game -> {
-			GlobalWidgets widgets = new GlobalWidgets(game);
+	public static void open(GameSpace gameSpace, ServerWorld world, DeathSwapMap map, DeathSwapConfig config) {
+		gameSpace.setActivity(activity -> {
+			GlobalWidgets widgets = GlobalWidgets.addTo(activity);
 			Set<ServerPlayerEntity> players = Sets.newHashSet(gameSpace.getPlayers());
-			DeathSwapActivePhase phase = new DeathSwapActivePhase(gameSpace, widgets, map, config, players);
+			DeathSwapActivePhase phase = new DeathSwapActivePhase(gameSpace, world, widgets, map, config, players);
 
 			// Rules
-			game.allow(GameRule.BLOCK_DROPS);
-			game.allow(GameRule.CRAFTING);
-			game.allow(GameRule.FALL_DAMAGE);
-			game.allow(GameRule.HUNGER);
-			game.deny(GameRule.PORTALS);
-			game.deny(GameRule.PVP);
+			activity.allow(GameRuleType.BLOCK_DROPS);
+			activity.allow(GameRuleType.CRAFTING);
+			activity.allow(GameRuleType.FALL_DAMAGE);
+			activity.allow(GameRuleType.HUNGER);
+			activity.deny(GameRuleType.PORTALS);
+			activity.deny(GameRuleType.PVP);
 
 			// Listeners
-			game.listen(GameOpenListener.EVENT, phase);
-			game.listen(GameTickListener.EVENT, phase);
-			game.listen(PlayerAddListener.EVENT, phase);
-			game.listen(PlayerDeathListener.EVENT, phase);
-			game.listen(PlayerRemoveListener.EVENT, phase);
+			activity.listen(GameActivityEvents.ENABLE, phase);
+			activity.listen(GameActivityEvents.TICK, phase);
+			activity.listen(GamePlayerEvents.OFFER, phase);
+			activity.listen(PlayerDeathEvent.EVENT, phase);
+			activity.listen(GamePlayerEvents.REMOVE, phase);
 		});
 	}
 
 	// Listeners
 	@Override
-	public void onOpen() {
+	public void onEnable() {
 		this.singleplayer = this.players.size() == 1;
 
 		for (ServerPlayerEntity player : this.players) {
-			player.setGameMode(GameMode.SURVIVAL);
-			DeathSwapActivePhase.spawn(this.gameSpace.getWorld(), this.map, this.config.getMapConfig(), player);
+			player.changeGameMode(GameMode.SURVIVAL);
+			DeathSwapActivePhase.spawn(this.world, this.map, this.config.getMapConfig(), player);
 		}
 	}
 	
@@ -106,11 +109,11 @@ public class DeathSwapActivePhase implements GameOpenListener, GameTickListener,
 	}
 
 	@Override
-	public void onAddPlayer(ServerPlayerEntity player) {
-		if (!this.players.contains(player)) {
-			this.setSpectator(player);
-			DeathSwapActivePhase.spawnAtCenter(this.gameSpace.getWorld(), this.map, this.config.getMapConfig(), player);
-		}
+	public PlayerOfferResult onOfferPlayer(PlayerOffer offer) {
+		return offer.accept(this.world, DeathSwapActivePhase.getCenterPos(this.world, this.map, this.config.getMapConfig())).and(() -> {
+			offer.player().setBodyYaw(DeathSwapActivePhase.getSpawnYaw(world));
+			this.setSpectator(offer.player());
+		});
 	}
 
 	@Override
@@ -120,7 +123,7 @@ public class DeathSwapActivePhase implements GameOpenListener, GameTickListener,
 
 	@Override
 	public ActionResult onDeath(ServerPlayerEntity player, DamageSource source) {
-		if (this.players.contains(player) && this.gameSpace.getWorld().getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES)) {
+		if (this.players.contains(player) && this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES)) {
 			Text message = player.getDamageTracker().getDeathMessage().shallowCopy().formatted(Formatting.RED);
 			this.gameSpace.getPlayers().sendMessage(message);
 		}
@@ -176,26 +179,36 @@ public class DeathSwapActivePhase implements GameOpenListener, GameTickListener,
 	}
 
 	private void setSpectator(ServerPlayerEntity player) {
-		player.setGameMode(GameMode.SPECTATOR);
+		player.changeGameMode(GameMode.SPECTATOR);
+	}
+
+	public static float getSpawnYaw(ServerWorld world) {
+		return world.getRandom().nextInt(3) * 90;
 	}
 
 	public static void spawn(ServerWorld world, DeathSwapMap map, DeathSwapMapConfig mapConfig, ServerPlayerEntity player) {
-		int x = MathHelper.nextInt(world.getRandom(), map.getBox().minX, map.getBox().maxX);
-		int z = MathHelper.nextInt(world.getRandom(), map.getBox().minZ, map.getBox().maxZ);
+		int x = MathHelper.nextInt(world.getRandom(), map.getBox().getMinX(), map.getBox().getMaxX());
+		int z = MathHelper.nextInt(world.getRandom(), map.getBox().getMinZ(), map.getBox().getMaxZ());
 
-		int surfaceY = map.getChunkGenerator().getHeight(x, z, Heightmap.Type.WORLD_SURFACE);
-		float yaw = world.getRandom().nextInt(3) * 90;
+		int surfaceY = map.getChunkGenerator().getHeight(x, z, Heightmap.Type.WORLD_SURFACE, world);
+		float yaw = DeathSwapActivePhase.getSpawnYaw(world);
 
 		player.teleport(world, x + 0.5, surfaceY, z + 0.5, yaw, 0);
 	}
 
-	public static void spawnAtCenter(ServerWorld world, DeathSwapMap map, DeathSwapMapConfig mapConfig, ServerPlayerEntity player) {
+	public static Vec3d getCenterPos(ServerWorld world, DeathSwapMap map, DeathSwapMapConfig mapConfig) {
 		int x = mapConfig.getX() * 8;
 		int z = mapConfig.getZ() * 8;
 
-		int surfaceY = map.getChunkGenerator().getHeight(x, z, Heightmap.Type.WORLD_SURFACE);
-		float yaw = world.getRandom().nextInt(3) * 90;
+		int surfaceY = map.getChunkGenerator().getHeight(x, z, Heightmap.Type.WORLD_SURFACE, world);
 
-		player.teleport(world, x + 0.5, surfaceY, z + 0.5, yaw, 0);
+		return new Vec3d(x + 0.5, surfaceY, z + 0.5);
+	}
+
+	public static void spawnAtCenter(ServerWorld world, DeathSwapMap map, DeathSwapMapConfig mapConfig, ServerPlayerEntity player) {
+		Vec3d pos = DeathSwapActivePhase.getCenterPos(world, map, mapConfig);
+		float yaw = DeathSwapActivePhase.getSpawnYaw(world);
+
+		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
 	}
 }

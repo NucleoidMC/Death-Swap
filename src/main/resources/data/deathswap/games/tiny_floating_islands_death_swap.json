@@ -1,6 +1,5 @@
 {
 	"type": "deathswap:death_swap",
-	"translation": "game.deathswap.tiny_floating_islands_death_swap",
 	"map": {
 		"settings": "minecraft:floating_islands",
 		"x": 10,

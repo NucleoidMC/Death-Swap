@@ -1,6 +1,5 @@
 {
 	"type": "deathswap:death_swap",
-	"translation": "game.deathswap.end_death_swap",
 	"map": {
 		"settings": "minecraft:end"
 	},

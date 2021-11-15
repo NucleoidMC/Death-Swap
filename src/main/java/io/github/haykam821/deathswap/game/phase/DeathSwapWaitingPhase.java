@@ -5,70 +5,70 @@ import io.github.haykam821.deathswap.game.map.DeathSwapMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
-import xyz.nucleoid.fantasy.BubbleWorldConfig;
+import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameOpenProcedure;
+import xyz.nucleoid.plasmid.game.GameResult;
 import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.GameWaitingLobby;
-import xyz.nucleoid.plasmid.game.StartResult;
-import xyz.nucleoid.plasmid.game.config.PlayerConfig;
-import xyz.nucleoid.plasmid.game.event.AttackEntityListener;
-import xyz.nucleoid.plasmid.game.event.OfferPlayerListener;
-import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDamageListener;
-import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
-import xyz.nucleoid.plasmid.game.event.RequestStartListener;
-import xyz.nucleoid.plasmid.game.player.JoinResult;
-import xyz.nucleoid.plasmid.game.rule.GameRule;
+import xyz.nucleoid.plasmid.game.common.GameWaitingLobby;
+import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.game.player.PlayerOffer;
+import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
+import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.stimuli.event.player.PlayerAttackEntityEvent;
+import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
+import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
-public class DeathSwapWaitingPhase implements AttackEntityListener, OfferPlayerListener, PlayerAddListener, PlayerDamageListener, PlayerDeathListener, RequestStartListener {
+public class DeathSwapWaitingPhase implements PlayerAttackEntityEvent, GamePlayerEvents.Offer, PlayerDamageEvent, PlayerDeathEvent, GameActivityEvents.RequestStart {
 	private final GameSpace gameSpace;
+	private final ServerWorld world;
 	private final DeathSwapMap map;
 	private final DeathSwapConfig config;
 
-	public DeathSwapWaitingPhase(GameSpace gameSpace, DeathSwapMap map, DeathSwapConfig config) {
+	public DeathSwapWaitingPhase(GameSpace gameSpace, ServerWorld world, DeathSwapMap map, DeathSwapConfig config) {
 		this.gameSpace = gameSpace;
+		this.world = world;
 		this.map = map;
 		this.config = config;
 	}
 
 	public static GameOpenProcedure open(GameOpenContext<DeathSwapConfig> context) {
-		DeathSwapConfig config = context.getConfig();
-		DeathSwapMap map = new DeathSwapMap(context.getServer(), config.getMapConfig());
+		DeathSwapConfig config = context.config();
+		DeathSwapMap map = new DeathSwapMap(context.server(), config.getMapConfig());
 
-		BubbleWorldConfig worldConfig = new BubbleWorldConfig()
+		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
 			.setGenerator(map.getChunkGenerator())
 			.setGameRule(GameRules.DO_MOB_SPAWNING, true)
-			.setDifficulty(Difficulty.NORMAL)
-			.setDefaultGameMode(GameMode.ADVENTURE);
+			.setDifficulty(Difficulty.NORMAL);
 
-		return context.createOpenProcedure(worldConfig, game -> {
-			DeathSwapWaitingPhase phase = new DeathSwapWaitingPhase(game.getGameSpace(), map, config);
-			GameWaitingLobby.applyTo(game, config.getPlayerConfig());
+		return context.openWithWorld(worldConfig, (activity, world) -> {
+			DeathSwapWaitingPhase phase = new DeathSwapWaitingPhase(activity.getGameSpace(), world, map, config);
+			GameWaitingLobby.addTo(activity, config.getPlayerConfig());
 
 			// Rules
-			game.deny(GameRule.BLOCK_DROPS);
-			game.deny(GameRule.CRAFTING);
-			game.deny(GameRule.FALL_DAMAGE);
-			game.deny(GameRule.HUNGER);
-			game.deny(GameRule.INTERACTION);
-			game.deny(GameRule.PORTALS);
-			game.deny(GameRule.PVP);
-			game.deny(GameRule.THROW_ITEMS);
+			activity.deny(GameRuleType.BLOCK_DROPS);
+			activity.deny(GameRuleType.CRAFTING);
+			activity.deny(GameRuleType.FALL_DAMAGE);
+			activity.deny(GameRuleType.HUNGER);
+			activity.deny(GameRuleType.INTERACTION);
+			activity.deny(GameRuleType.PORTALS);
+			activity.deny(GameRuleType.PVP);
+			activity.deny(GameRuleType.THROW_ITEMS);
 
 			// Listeners
-			game.listen(AttackEntityListener.EVENT, phase);
-			game.listen(OfferPlayerListener.EVENT, phase);
-			game.listen(PlayerAddListener.EVENT, phase);
-			game.listen(PlayerDamageListener.EVENT, phase);
-			game.listen(PlayerDeathListener.EVENT, phase);
-			game.listen(RequestStartListener.EVENT, phase);
+			activity.listen(PlayerAttackEntityEvent.EVENT, phase);
+			activity.listen(GamePlayerEvents.OFFER, phase);
+			activity.listen(PlayerDamageEvent.EVENT, phase);
+			activity.listen(PlayerDeathEvent.EVENT, phase);
+			activity.listen(GameActivityEvents.REQUEST_START, phase);
 		});
 	}
 
@@ -79,13 +79,11 @@ public class DeathSwapWaitingPhase implements AttackEntityListener, OfferPlayerL
 	}
 
 	@Override
-	public JoinResult offerPlayer(ServerPlayerEntity player) {
-		return this.isFull() ? JoinResult.gameFull() : JoinResult.ok();
-	}
-
-	@Override
-	public void onAddPlayer(ServerPlayerEntity player) {
-		DeathSwapActivePhase.spawnAtCenter(this.gameSpace.getWorld(), this.map, this.config.getMapConfig(), player);
+	public PlayerOfferResult onOfferPlayer(PlayerOffer offer) {
+		return offer.accept(this.world, DeathSwapActivePhase.getCenterPos(this.world, this.map, this.config.getMapConfig())).and(() -> {
+			offer.player().setBodyYaw(DeathSwapActivePhase.getSpawnYaw(world));
+			offer.player().changeGameMode(GameMode.ADVENTURE);
+		});
 	}
 
 	@Override
@@ -96,25 +94,15 @@ public class DeathSwapWaitingPhase implements AttackEntityListener, OfferPlayerL
 	@Override
 	public ActionResult onDeath(ServerPlayerEntity player, DamageSource source) {
 		// Respawn player
-		DeathSwapActivePhase.spawnAtCenter(this.gameSpace.getWorld(), this.map, this.config.getMapConfig(), player);
+		DeathSwapActivePhase.spawnAtCenter(this.world, this.map, this.config.getMapConfig(), player);
 		player.setHealth(player.getMaxHealth());
 
 		return ActionResult.FAIL;
 	}
 
 	@Override
-	public StartResult requestStart() {
-		PlayerConfig playerConfig = this.config.getPlayerConfig();
-		if (this.gameSpace.getPlayerCount() < playerConfig.getMinPlayers()) {
-			return StartResult.NOT_ENOUGH_PLAYERS;
-		}
-
-		DeathSwapActivePhase.open(this.gameSpace, this.map, this.config);
-		return StartResult.OK;
-	}
-
-	// Utilities
-	private boolean isFull() {
-		return this.gameSpace.getPlayerCount() >= this.config.getPlayerConfig().getMaxPlayers();
+	public GameResult onRequestStart() {
+		DeathSwapActivePhase.open(this.gameSpace, this.world, this.map, this.config);
+		return GameResult.ok();
 	}
 }

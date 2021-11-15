@@ -13,8 +13,8 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
-import xyz.nucleoid.plasmid.widget.BossBarWidget;
-import xyz.nucleoid.plasmid.widget.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.game.common.widget.BossBarWidget;
 
 public class DeathSwapTimer {
 	private static final BossBar.Style STYLE = BossBar.Style.PROGRESS;
@@ -33,7 +33,6 @@ public class DeathSwapTimer {
 		this.swapTicks = this.phase.getConfig().getInitialSwapTicks();
 
 		this.widget = widgets.addBossBar(this.getBarTitle(NO_SWAP_TITLE, NO_SWAP_FORMATTING), NO_SWAP_COLOR, STYLE);
-		this.phase.getGameSpace().addResource(this.widget);
 	}
 
 	public void tick() {

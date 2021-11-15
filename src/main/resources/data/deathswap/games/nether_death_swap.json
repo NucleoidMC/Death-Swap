@@ -1,6 +1,5 @@
 {
 	"type": "deathswap:death_swap",
-	"translation": "game.deathswap.nether_death_swap",
 	"map": {
 		"settings": "minecraft:nether"
 	},

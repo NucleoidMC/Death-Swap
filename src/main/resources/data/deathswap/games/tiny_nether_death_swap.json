@@ -1,6 +1,5 @@
 {
 	"type": "deathswap:death_swap",
-	"translation": "game.deathswap.tiny_nether_death_swap",
 	"map": {
 		"settings": "minecraft:nether",
 		"x": 10,

@@ -1,6 +1,5 @@
 {
 	"type": "deathswap:death_swap",
-	"translation": "game.deathswap.tiny_amplified_death_swap",
 	"map": {
 		"settings": "minecraft:amplified",
 		"x": 10,

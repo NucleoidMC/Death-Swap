@@ -18,7 +18,7 @@ public class Main implements ModInitializer {
 	public static final Block BARRIER_AIR = new BarrierAirBlock(FabricBlockSettings.copyOf(Blocks.AIR).strength(-1, 3600000));
 
 	private static final Identifier DEATH_SWAP_ID = new Identifier(MOD_ID, "death_swap");
-	public static final GameType<DeathSwapConfig> DEATH_SWAP_TYPE = GameType.register(DEATH_SWAP_ID, DeathSwapWaitingPhase::open, DeathSwapConfig.CODEC);
+	public static final GameType<DeathSwapConfig> DEATH_SWAP_TYPE = GameType.register(DEATH_SWAP_ID, DeathSwapConfig.CODEC, DeathSwapWaitingPhase::open);
 
 	@Override
 	public void onInitialize() {

@@ -4,7 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.deathswap.game.map.DeathSwapMapConfig;
-import xyz.nucleoid.plasmid.game.config.PlayerConfig;
+import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 public class DeathSwapConfig {
 	public static final Codec<DeathSwapConfig> CODEC = RecordCodecBuilder.create(instance -> {
