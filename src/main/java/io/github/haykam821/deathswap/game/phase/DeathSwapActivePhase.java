@@ -29,7 +29,6 @@ import xyz.nucleoid.plasmid.game.event.PlayerAddListener;
 import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.PlayerRemoveListener;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.game.rule.RuleResult;
 import xyz.nucleoid.plasmid.widget.GlobalWidgets;
 
 public class DeathSwapActivePhase implements GameOpenListener, GameTickListener, PlayerAddListener, PlayerDeathListener, PlayerRemoveListener {
@@ -55,19 +54,19 @@ public class DeathSwapActivePhase implements GameOpenListener, GameTickListener,
 			DeathSwapActivePhase phase = new DeathSwapActivePhase(gameSpace, widgets, map, config, players);
 
 			// Rules
-			game.setRule(GameRule.BLOCK_DROPS, RuleResult.ALLOW);
-			game.setRule(GameRule.CRAFTING, RuleResult.ALLOW);
-			game.setRule(GameRule.FALL_DAMAGE, RuleResult.ALLOW);
-			game.setRule(GameRule.HUNGER, RuleResult.ALLOW);
-			game.setRule(GameRule.PORTALS, RuleResult.DENY);
-			game.setRule(GameRule.PVP, RuleResult.DENY);
+			game.allow(GameRule.BLOCK_DROPS);
+			game.allow(GameRule.CRAFTING);
+			game.allow(GameRule.FALL_DAMAGE);
+			game.allow(GameRule.HUNGER);
+			game.deny(GameRule.PORTALS);
+			game.deny(GameRule.PVP);
 
 			// Listeners
-			game.on(GameOpenListener.EVENT, phase);
-			game.on(GameTickListener.EVENT, phase);
-			game.on(PlayerAddListener.EVENT, phase);
-			game.on(PlayerDeathListener.EVENT, phase);
-			game.on(PlayerRemoveListener.EVENT, phase);
+			game.listen(GameOpenListener.EVENT, phase);
+			game.listen(GameTickListener.EVENT, phase);
+			game.listen(PlayerAddListener.EVENT, phase);
+			game.listen(PlayerDeathListener.EVENT, phase);
+			game.listen(PlayerRemoveListener.EVENT, phase);
 		});
 	}
 

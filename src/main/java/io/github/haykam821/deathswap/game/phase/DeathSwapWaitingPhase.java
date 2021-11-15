@@ -26,7 +26,6 @@ import xyz.nucleoid.plasmid.game.event.PlayerDeathListener;
 import xyz.nucleoid.plasmid.game.event.RequestStartListener;
 import xyz.nucleoid.plasmid.game.player.JoinResult;
 import xyz.nucleoid.plasmid.game.rule.GameRule;
-import xyz.nucleoid.plasmid.game.rule.RuleResult;
 
 public class DeathSwapWaitingPhase implements AttackEntityListener, OfferPlayerListener, PlayerAddListener, PlayerDamageListener, PlayerDeathListener, RequestStartListener {
 	private final GameSpace gameSpace;
@@ -50,26 +49,26 @@ public class DeathSwapWaitingPhase implements AttackEntityListener, OfferPlayerL
 			.setDefaultGameMode(GameMode.ADVENTURE);
 
 		return context.createOpenProcedure(worldConfig, game -> {
-			DeathSwapWaitingPhase phase = new DeathSwapWaitingPhase(game.getSpace(), map, config);
+			DeathSwapWaitingPhase phase = new DeathSwapWaitingPhase(game.getGameSpace(), map, config);
 			GameWaitingLobby.applyTo(game, config.getPlayerConfig());
 
 			// Rules
-			game.setRule(GameRule.BLOCK_DROPS, RuleResult.DENY);
-			game.setRule(GameRule.CRAFTING, RuleResult.DENY);
-			game.setRule(GameRule.FALL_DAMAGE, RuleResult.DENY);
-			game.setRule(GameRule.HUNGER, RuleResult.DENY);
-			game.setRule(GameRule.INTERACTION, RuleResult.DENY);
-			game.setRule(GameRule.PORTALS, RuleResult.DENY);
-			game.setRule(GameRule.PVP, RuleResult.DENY);
-			game.setRule(GameRule.THROW_ITEMS, RuleResult.DENY);
+			game.deny(GameRule.BLOCK_DROPS);
+			game.deny(GameRule.CRAFTING);
+			game.deny(GameRule.FALL_DAMAGE);
+			game.deny(GameRule.HUNGER);
+			game.deny(GameRule.INTERACTION);
+			game.deny(GameRule.PORTALS);
+			game.deny(GameRule.PVP);
+			game.deny(GameRule.THROW_ITEMS);
 
 			// Listeners
-			game.on(AttackEntityListener.EVENT, phase);
-			game.on(OfferPlayerListener.EVENT, phase);
-			game.on(PlayerAddListener.EVENT, phase);
-			game.on(PlayerDamageListener.EVENT, phase);
-			game.on(PlayerDeathListener.EVENT, phase);
-			game.on(RequestStartListener.EVENT, phase);
+			game.listen(AttackEntityListener.EVENT, phase);
+			game.listen(OfferPlayerListener.EVENT, phase);
+			game.listen(PlayerAddListener.EVENT, phase);
+			game.listen(PlayerDamageListener.EVENT, phase);
+			game.listen(PlayerDeathListener.EVENT, phase);
+			game.listen(RequestStartListener.EVENT, phase);
 		});
 	}
 
