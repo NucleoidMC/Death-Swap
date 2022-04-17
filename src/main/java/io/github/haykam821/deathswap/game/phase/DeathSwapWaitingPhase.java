@@ -12,6 +12,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
+import net.minecraft.world.dimension.DimensionType;
 import xyz.nucleoid.fantasy.RuntimeWorldConfig;
 import xyz.nucleoid.plasmid.game.GameOpenContext;
 import xyz.nucleoid.plasmid.game.GameOpenProcedure;
@@ -42,9 +43,12 @@ public class DeathSwapWaitingPhase implements PlayerAttackEntityEvent, GamePlaye
 
 	public static GameOpenProcedure open(GameOpenContext<DeathSwapConfig> context) {
 		DeathSwapConfig config = context.config();
-		DeathSwapMap map = new DeathSwapMap(context.server(), config.getMapConfig());
+
+		DimensionType dimensionType = config.getMapConfig().getDimensionType(context.server());
+		DeathSwapMap map = new DeathSwapMap(context.server(), config.getMapConfig(), dimensionType);
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+			.setDimensionType(dimensionType)
 			.setGenerator(map.getChunkGenerator())
 			.setGameRule(GameRules.DO_MOB_SPAWNING, true)
 			.setDifficulty(Difficulty.NORMAL);
