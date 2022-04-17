@@ -1,7 +1,7 @@
 {
 	"type": "deathswap:death_swap",
 	"map": {
-		"dimension_type_id": "minecraft:the_end",
+		"dimension_type": "minecraft:the_end",
 		"settings": "minecraft:end"
 	},
 	"players": {

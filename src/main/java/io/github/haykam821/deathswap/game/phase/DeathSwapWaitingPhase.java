@@ -9,6 +9,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
@@ -44,8 +45,8 @@ public class DeathSwapWaitingPhase implements PlayerAttackEntityEvent, GamePlaye
 	public static GameOpenProcedure open(GameOpenContext<DeathSwapConfig> context) {
 		DeathSwapConfig config = context.config();
 
-		DimensionType dimensionType = config.getMapConfig().getDimensionType(context.server());
-		DeathSwapMap map = new DeathSwapMap(context.server(), config.getMapConfig(), dimensionType);
+		RegistryEntry<DimensionType> dimensionType = config.getMapConfig().getDimensionType();
+		DeathSwapMap map = new DeathSwapMap(context.server(), config.getMapConfig(), dimensionType.value());
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
 			.setDimensionType(dimensionType)

@@ -30,15 +30,14 @@ import xyz.nucleoid.plasmid.game.world.generator.GameChunkGenerator;
 
 public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	private final DeathSwapMapConfig mapConfig;
-	private final long seed;
 	private final ChunkGenerator chunkGenerator;
 
 	public DeathSwapChunkGenerator(MinecraftServer server, DeathSwapMapConfig mapConfig) {
 		super(server);
 		this.mapConfig = mapConfig;
 
-		this.seed = server.getOverworld().getRandom().nextLong();
-		
+		long seed = server.getOverworld().getRandom().nextLong();
+
 		RegistryKey<ChunkGeneratorSettings> chunkGeneratorSettingsKey = RegistryKey.of(Registry.CHUNK_GENERATOR_SETTINGS_KEY, mapConfig.getChunkGeneratorSettingsId());
 		this.chunkGenerator = GeneratorOptions.createGenerator(server.getRegistryManager(), seed, chunkGeneratorSettingsKey);
 	}
@@ -181,7 +180,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	@Override
 	public void carve(ChunkRegion region, long seed, BiomeAccess access, StructureAccessor structures, Chunk chunk, Carver carver) {
 		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.carve(region, this.seed, access, structures, chunk, carver);
+			this.chunkGenerator.carve(region, seed, access, structures, chunk, carver);
 		}
 	}
 

@@ -5,17 +5,15 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.deathswap.Main;
 import net.minecraft.block.Blocks;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.DynamicRegistryManager;
-import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.stateprovider.BlockStateProvider;
 
 public class DeathSwapMapConfig {
 	public static final Codec<DeathSwapMapConfig> CODEC = RecordCodecBuilder.create(instance -> {
 		return instance.group(
-			Identifier.CODEC.optionalFieldOf("dimension_type_id", DimensionType.OVERWORLD_ID).forGetter(DeathSwapMapConfig::getDimensionTypeId),
+			DimensionType.REGISTRY_CODEC.fieldOf("dimension_type").forGetter(DeathSwapMapConfig::getDimensionType),
 			Identifier.CODEC.fieldOf("settings").forGetter(DeathSwapMapConfig::getChunkGeneratorSettingsId),
 			BlockStateProvider.TYPE_CODEC.optionalFieldOf("barrier", BlockStateProvider.of(Blocks.BARRIER)).forGetter(DeathSwapMapConfig::getBarrier),
 			BlockStateProvider.TYPE_CODEC.optionalFieldOf("top_barrier", BlockStateProvider.of(Main.BARRIER_AIR)).forGetter(DeathSwapMapConfig::getTopBarrier),
@@ -24,15 +22,15 @@ public class DeathSwapMapConfig {
 		).apply(instance, DeathSwapMapConfig::new);
 	});
 
-	private final Identifier dimensionTypeId;
+	private final RegistryEntry<DimensionType> dimensionType;
 	private final Identifier chunkGeneratorSettingsId;
 	private final BlockStateProvider barrier;
 	private final BlockStateProvider topBarrier;
 	private final int x;
 	private final int z;
 
-	public DeathSwapMapConfig(Identifier dimensionTypeId, Identifier chunkGeneratorSettingsId, BlockStateProvider barrier, BlockStateProvider topBarrier, int x, int z) {
-		this.dimensionTypeId = dimensionTypeId;
+	public DeathSwapMapConfig(RegistryEntry<DimensionType> dimensionType, Identifier chunkGeneratorSettingsId, BlockStateProvider barrier, BlockStateProvider topBarrier, int x, int z) {
+		this.dimensionType = dimensionType;
 		this.chunkGeneratorSettingsId = chunkGeneratorSettingsId;
 		this.barrier = barrier;
 		this.topBarrier = topBarrier;
@@ -40,15 +38,8 @@ public class DeathSwapMapConfig {
 		this.z = z;
 	}
 
-	public Identifier getDimensionTypeId() {
-		return this.dimensionTypeId;
-	}
-
-	public DimensionType getDimensionType(MinecraftServer server) {
-		DynamicRegistryManager registryManager = server.getRegistryManager();
-		Registry<DimensionType> registry = registryManager.get(Registry.DIMENSION_TYPE_KEY);
-
-		return registry.get(this.dimensionTypeId);
+	public RegistryEntry<DimensionType> getDimensionType() {
+		return this.dimensionType;
 	}
 
 	public Identifier getChunkGeneratorSettingsId() {

@@ -1,7 +1,7 @@
 {
 	"type": "deathswap:death_swap",
 	"map": {
-		"dimension_type_id": "minecraft:overworld_caves",
+		"dimension_type": "minecraft:overworld_caves",
 		"settings": "minecraft:caves",
 		"x": 10,
 		"z": 10
