@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.deathswap.game.map.DeathSwapMapConfig;
+import net.minecraft.SharedConstants;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 public class DeathSwapConfig {
@@ -11,9 +12,9 @@ public class DeathSwapConfig {
 		return instance.group(
 			PlayerConfig.CODEC.fieldOf("players").forGetter(DeathSwapConfig::getPlayerConfig),
 			DeathSwapMapConfig.CODEC.fieldOf("map").forGetter(DeathSwapConfig::getMapConfig),
-			Codec.INT.optionalFieldOf("initial_swap_ticks", 20 * 60 * 5).forGetter(DeathSwapConfig::getInitialSwapTicks),
-			Codec.INT.optionalFieldOf("swap_ticks", 20 * 60 * 2).forGetter(DeathSwapConfig::getSwapTicks),
-			Codec.INT.optionalFieldOf("swap_warning_ticks", 20 * 30).forGetter(DeathSwapConfig::getSwapWarningTicks)
+			Codec.INT.optionalFieldOf("initial_swap_ticks", SharedConstants.TICKS_PER_MINUTE * 5).forGetter(DeathSwapConfig::getInitialSwapTicks),
+			Codec.INT.optionalFieldOf("swap_ticks", SharedConstants.TICKS_PER_MINUTE * 2).forGetter(DeathSwapConfig::getSwapTicks),
+			Codec.INT.optionalFieldOf("swap_warning_ticks", SharedConstants.TICKS_PER_SECOND * 30).forGetter(DeathSwapConfig::getSwapWarningTicks)
 		).apply(instance, DeathSwapConfig::new);
 	});
 

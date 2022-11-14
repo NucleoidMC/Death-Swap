@@ -17,7 +17,10 @@
 	"text.deathswap.eliminated.out_of_bounds": "%s has been eliminated by going out of bounds!",
 	"text.deathswap.timer.no_swap": "No swap",
 	"text.deathswap.timer.swap": "You swapped with %s!",
-	"text.deathswap.timer.warning": "Swapping in %s seconds",
+	"text.deathswap.timer.warning.minute": "Swapping in 1 minute",
+	"text.deathswap.timer.warning.minutes": "Swapping in %s minutes",
+	"text.deathswap.timer.warning.second": "Swapping in 1 second",
+	"text.deathswap.timer.warning.seconds": "Swapping in %s seconds",
 	"text.deathswap.win": "%s has won the game!",
 	"text.deathswap.win.none": "Nobody won the game!"
 }

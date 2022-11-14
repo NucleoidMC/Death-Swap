@@ -1,11 +1,15 @@
 package io.github.haykam821.deathswap.game;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import com.google.common.collect.Iterables;
 
 import io.github.haykam821.deathswap.game.phase.DeathSwapActivePhase;
+import net.minecraft.SharedConstants;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
@@ -24,15 +28,21 @@ public class DeathSwapTimer {
 	private static final Formatting WARNING_FORMATTING = Formatting.YELLOW;
 	private static final Text NO_SWAP_TITLE = new TranslatableText("text.deathswap.timer.no_swap");
 
+	private static final DecimalFormat MINUTES_FORMAT = new DecimalFormat("#.#", new DecimalFormatSymbols(Locale.ROOT));
 	private final DeathSwapActivePhase phase;
 	private final BossBarWidget widget;
+
 	private int swapTicks;
+	private int warningTicks;
 
 	public DeathSwapTimer(DeathSwapActivePhase phase, GlobalWidgets widgets) {
 		this.phase = phase;
-		this.swapTicks = this.phase.getConfig().getInitialSwapTicks();
 
-		this.widget = widgets.addBossBar(this.getBarTitle(NO_SWAP_TITLE, NO_SWAP_FORMATTING), NO_SWAP_COLOR, STYLE);
+		this.swapTicks = this.phase.getConfig().getInitialSwapTicks();
+		this.warningTicks = this.swapTicks;
+
+		this.widget = widgets.addBossBar(this.getBarTitle(this.getWarning(), WARNING_FORMATTING), WARNING_COLOR, STYLE);
+		this.widget.setProgress(0);
 	}
 
 	public void tick() {
@@ -40,7 +50,7 @@ public class DeathSwapTimer {
 		if (this.swapTicks == 0) {
 			this.swap();
 			this.updateNoSwapBar();
-		} else if (this.swapTicks < this.phase.getConfig().getSwapWarningTicks() && this.swapTicks % 20 == 0) {
+		} else if (this.swapTicks < this.warningTicks && this.swapTicks % SharedConstants.TICKS_PER_SECOND == 0) {
 			this.updateWarningBar();
 		}
 	}
@@ -73,6 +83,7 @@ public class DeathSwapTimer {
 		} 
 
 		this.swapTicks = this.phase.getConfig().getSwapTicks();
+		this.warningTicks = this.phase.getConfig().getSwapWarningTicks();
 	}
 
 	private void updateNoSwapBar() {
@@ -83,11 +94,27 @@ public class DeathSwapTimer {
 
 	private void updateWarningBar() {
 		this.widget.setStyle(WARNING_COLOR, STYLE);
+		this.widget.setProgress((this.warningTicks - this.swapTicks) / (float) this.warningTicks);
 
-		int swapWarningTicks = this.phase.getConfig().getSwapWarningTicks();
-		this.widget.setProgress((swapWarningTicks - this.swapTicks) / (float) swapWarningTicks);
+		this.setBarTitle(this.getWarning(), WARNING_FORMATTING);
+	}
 
-		this.setBarTitle(new TranslatableText("text.deathswap.timer.warning", this.swapTicks / 20), WARNING_FORMATTING);
+	private Text getWarning() {
+		int seconds = this.swapTicks / SharedConstants.TICKS_PER_SECOND;
+
+		if (seconds >= 60) {
+			double minutes = seconds / 60d;
+
+			if (minutes > 1.05) {
+				return new TranslatableText("text.deathswap.timer.warning.minutes", MINUTES_FORMAT.format(minutes));
+			} else {
+				return new TranslatableText("text.deathswap.timer.warning.minute");
+			}
+		} else if (seconds == 1) {
+			return new TranslatableText("text.deathswap.timer.warning.second");
+		} else {
+			return new TranslatableText("text.deathswap.timer.warning.seconds", seconds);
+		}
 	}
 
 	private void setBarTitle(Text customText, Formatting formatting) {
