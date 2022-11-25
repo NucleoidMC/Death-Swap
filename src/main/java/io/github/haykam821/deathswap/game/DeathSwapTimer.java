@@ -84,6 +84,8 @@ public class DeathSwapTimer {
 
 		this.swapTicks = this.phase.getConfig().getSwapTicks();
 		this.warningTicks = this.phase.getConfig().getSwapWarningTicks();
+
+		this.phase.getEliminationCollector().start();
 	}
 
 	private void updateNoSwapBar() {

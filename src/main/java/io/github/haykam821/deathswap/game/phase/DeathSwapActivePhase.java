@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 
 import io.github.haykam821.deathswap.game.DeathSwapConfig;
 import io.github.haykam821.deathswap.game.DeathSwapTimer;
+import io.github.haykam821.deathswap.game.EliminationCollector;
 import io.github.haykam821.deathswap.game.map.DeathSwapMap;
 import io.github.haykam821.deathswap.game.map.DeathSwapMapConfig;
 import net.minecraft.entity.damage.DamageSource;
@@ -39,6 +40,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	private final DeathSwapConfig config;
 	private final Set<ServerPlayerEntity> players;
 	private final DeathSwapTimer timer;
+	private final EliminationCollector eliminationCollector = new EliminationCollector(this);
 	private boolean singleplayer;
 
 	public DeathSwapActivePhase(GameSpace gameSpace, ServerWorld world, GlobalWidgets widgets, DeathSwapMap map, DeathSwapConfig config, Set<ServerPlayerEntity> players) {
@@ -87,6 +89,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	@Override
 	public void onTick() {
 		this.timer.tick();
+		this.eliminationCollector.tick();
 
 		// Eliminate players that are out of bounds
 		Iterator<ServerPlayerEntity> iterator = this.players.iterator();
@@ -145,6 +148,10 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		return this.players;
 	}
 
+	public EliminationCollector getEliminationCollector() {
+		return this.eliminationCollector;
+	}
+
 	// Utilities
 	private MutableText getEndingMessage() {
 		if (this.players.size() == 1) {
@@ -167,7 +174,10 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 
 		if (removed) {
 			this.setSpectator(player);
-			this.sendEliminateMessage(player, suffix);
+
+			if (!this.eliminationCollector.add(player)) {
+				this.sendEliminateMessage(player, suffix);
+			}
 		}
 
 		return removed;

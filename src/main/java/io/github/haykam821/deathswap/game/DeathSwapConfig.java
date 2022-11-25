@@ -14,7 +14,8 @@ public class DeathSwapConfig {
 			DeathSwapMapConfig.CODEC.fieldOf("map").forGetter(DeathSwapConfig::getMapConfig),
 			Codec.INT.optionalFieldOf("initial_swap_ticks", SharedConstants.TICKS_PER_MINUTE * 5).forGetter(DeathSwapConfig::getInitialSwapTicks),
 			Codec.INT.optionalFieldOf("swap_ticks", SharedConstants.TICKS_PER_MINUTE * 2).forGetter(DeathSwapConfig::getSwapTicks),
-			Codec.INT.optionalFieldOf("swap_warning_ticks", SharedConstants.TICKS_PER_SECOND * 30).forGetter(DeathSwapConfig::getSwapWarningTicks)
+			Codec.INT.optionalFieldOf("swap_warning_ticks", SharedConstants.TICKS_PER_SECOND * 30).forGetter(DeathSwapConfig::getSwapWarningTicks),
+			Codec.INT.optionalFieldOf("swap_elimination_collection_ticks", SharedConstants.TICKS_PER_SECOND * 5).forGetter(DeathSwapConfig::getSwapEliminationCollectionTicks)
 		).apply(instance, DeathSwapConfig::new);
 	});
 
@@ -23,13 +24,15 @@ public class DeathSwapConfig {
 	private final int initialSwapTicks;
 	private final int swapTicks;
 	private final int swapWarningTicks;
+	private final int swapEliminationCollectionTicks;
 
-	public DeathSwapConfig(PlayerConfig playerConfig, DeathSwapMapConfig mapConfig, int initialSwapTicks, int swapTicks, int swapWarningTicks) {
+	public DeathSwapConfig(PlayerConfig playerConfig, DeathSwapMapConfig mapConfig, int initialSwapTicks, int swapTicks, int swapWarningTicks, int swapEliminationCollectionTicks) {
 		this.playerConfig = playerConfig;
 		this.mapConfig = mapConfig;
 		this.initialSwapTicks = initialSwapTicks;
 		this.swapTicks = swapTicks;
 		this.swapWarningTicks = swapWarningTicks;
+		this.swapEliminationCollectionTicks = swapEliminationCollectionTicks;
 	}
 
 	public PlayerConfig getPlayerConfig() {
@@ -50,5 +53,9 @@ public class DeathSwapConfig {
 
 	public int getSwapWarningTicks() {
 		return this.swapWarningTicks;
+	}
+
+	public int getSwapEliminationCollectionTicks() {
+		return this.swapEliminationCollectionTicks;
 	}
 }
