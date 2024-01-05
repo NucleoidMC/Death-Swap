@@ -7,8 +7,9 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 import xyz.nucleoid.plasmid.game.GameType;
 
 public class Main implements ModInitializer {
@@ -22,6 +23,6 @@ public class Main implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		Registry.register(Registry.BLOCK, BARRIER_AIR_ID, BARRIER_AIR);
+		Registry.register(Registries.BLOCK, BARRIER_AIR_ID, BARRIER_AIR);
 	}
 }

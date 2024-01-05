@@ -8,7 +8,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import xyz.nucleoid.plasmid.game.player.PlayerIterable;
 import xyz.nucleoid.plasmid.util.PlayerRef;
@@ -100,7 +99,7 @@ public class EliminationCollector {
 	}
 
 	private static Text createText(String keySuffix, Formatting formatting, boolean title, Object... args) {
-		return new TranslatableText("text.deathswap.elimination_collector." + keySuffix, args).styled(style -> {
+		return Text.translatable("text.deathswap.elimination_collector." + keySuffix, args).styled(style -> {
 			return style.withFormatting(formatting).withBold(title);
 		});
 	}

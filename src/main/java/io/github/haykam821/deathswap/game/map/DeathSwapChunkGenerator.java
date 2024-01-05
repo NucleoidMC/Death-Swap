@@ -1,6 +1,5 @@
 package io.github.haykam821.deathswap.game.map;
 
-import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
@@ -8,24 +7,22 @@ import net.minecraft.block.BlockState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.util.math.random.Random;
 import net.minecraft.world.ChunkRegion;
 import net.minecraft.world.HeightLimitView;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.StructureWorldAccess;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.BiomeSource;
-import net.minecraft.world.biome.source.util.MultiNoiseUtil.MultiNoiseSampler;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.GenerationStep.Carver;
-import net.minecraft.world.gen.GeneratorOptions;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.Blender;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
+import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
+import net.minecraft.world.gen.noise.NoiseConfig;
 import xyz.nucleoid.plasmid.game.world.generator.GameChunkGenerator;
 
 public final class DeathSwapChunkGenerator extends GameChunkGenerator {
@@ -33,13 +30,18 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	private final ChunkGenerator chunkGenerator;
 
 	public DeathSwapChunkGenerator(MinecraftServer server, DeathSwapMapConfig mapConfig) {
-		super(server);
+		super(mapConfig.getDimensionOptions().chunkGenerator().getBiomeSource());
+
 		this.mapConfig = mapConfig;
+		this.chunkGenerator = mapConfig.getDimensionOptions().chunkGenerator();
+	}
 
-		long seed = server.getOverworld().getRandom().nextLong();
+	public ChunkGeneratorSettings getSettings() {
+		if (this.chunkGenerator instanceof NoiseChunkGenerator noiseChunkGenerator) {
+			return noiseChunkGenerator.getSettings().value();
+		}
 
-		RegistryKey<ChunkGeneratorSettings> chunkGeneratorSettingsKey = RegistryKey.of(Registry.CHUNK_GENERATOR_SETTINGS_KEY, mapConfig.getChunkGeneratorSettingsId());
-		this.chunkGenerator = GeneratorOptions.createGenerator(server.getRegistryManager(), seed, chunkGeneratorSettingsKey);
+		return null;
 	}
 
 	private boolean isChunkPosWithinArea(ChunkPos chunkPos) {
@@ -51,11 +53,11 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	}
 
 	@Override
-	public CompletableFuture<Chunk> populateBiomes(Registry<Biome> registry, Executor executor, Blender blender, StructureAccessor structures, Chunk chunk) {
+	public CompletableFuture<Chunk> populateBiomes(Executor executor, NoiseConfig noiseConfig, Blender blender, StructureAccessor structures, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			return this.chunkGenerator.populateBiomes(registry, executor, blender, structures, chunk);
+			return this.chunkGenerator.populateBiomes(executor, noiseConfig, blender, structures, chunk);
 		} else {
-			return super.populateBiomes(registry, executor, blender, structures, chunk);
+			return super.populateBiomes(executor, noiseConfig, blender, structures, chunk);
 		}
 	}
 
@@ -73,22 +75,17 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	}
 
 	@Override
-	public MultiNoiseSampler getMultiNoiseSampler() {
-		return this.chunkGenerator.getMultiNoiseSampler();
-	}
-
-	@Override
-	public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, StructureAccessor structures, Chunk chunk) {
+	public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, NoiseConfig noiseConfig, StructureAccessor structures, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			return this.chunkGenerator.populateNoise(executor, blender, structures, chunk);
+			return this.chunkGenerator.populateNoise(executor, blender, noiseConfig, structures, chunk);
 		}
-		return super.populateNoise(executor, blender, structures, chunk);
+		return super.populateNoise(executor, blender, noiseConfig, structures, chunk);
 	}
 
 	@Override
-	public void buildSurface(ChunkRegion region, StructureAccessor structures, Chunk chunk) {
+	public void buildSurface(ChunkRegion region, StructureAccessor structures, NoiseConfig noiseConfig, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.buildSurface(region, structures, chunk);
+			this.chunkGenerator.buildSurface(region, structures, noiseConfig, chunk);
 		}
 	}
 
@@ -123,7 +120,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 		// Top
 		for (int x = 0; x < 16; x++) {
 			for (int z = 0; z < 16; z++) {
-				pos.set(x + originX, chunk.getTopY(), z + originZ);
+				pos.set(x + originX, topY, z + originZ);
 				chunk.setBlockState(pos, this.getTopBarrierState(random, pos), false);
 			}
 		}
@@ -170,17 +167,17 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	}
 
 	private BlockState getTopBarrierState(Random random, BlockPos pos) {
-		return this.mapConfig.getTopBarrier().getBlockState(random, pos);
+		return this.mapConfig.getTopBarrier().get(random, pos);
 	}
 
 	private BlockState getBarrierState(Random random, BlockPos pos) {
-		return this.mapConfig.getBarrier().getBlockState(random, pos);
+		return this.mapConfig.getBarrier().get(random, pos);
 	}
 
 	@Override
-	public void carve(ChunkRegion region, long seed, BiomeAccess access, StructureAccessor structures, Chunk chunk, Carver carver) {
+	public void carve(ChunkRegion region, long seed, NoiseConfig noiseConfig, BiomeAccess access, StructureAccessor structures, Chunk chunk, Carver carver) {
 		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.carve(region, seed, access, structures, chunk, carver);
+			this.chunkGenerator.carve(region, seed, noiseConfig, access, structures, chunk, carver);
 		}
 	}
 
@@ -200,18 +197,18 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 	}
 
 	@Override
-	public int getHeight(int x, int z, Heightmap.Type heightmapType, HeightLimitView world) {
+	public int getHeight(int x, int z, Heightmap.Type heightmapType, HeightLimitView world, NoiseConfig noiseConfig) {
 		if (this.isChunkPosWithinArea(new ChunkPos(x >> 4, z >> 4))) {
-			return this.chunkGenerator.getHeight(x, z, heightmapType, world);
+			return this.chunkGenerator.getHeight(x, z, heightmapType, world, noiseConfig);
 		}
-		return super.getHeight(x, z, heightmapType, world);
+		return super.getHeight(x, z, heightmapType, world, noiseConfig);
 	}
 
 	@Override
-	public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world) {
+	public VerticalBlockSample getColumnSample(int x, int z, HeightLimitView world, NoiseConfig noiseConfig) {
 		if (this.isChunkPosWithinArea(new ChunkPos(x >> 4, z >> 4))) {
-			return this.chunkGenerator.getColumnSample(x, z, world);
+			return this.chunkGenerator.getColumnSample(x, z, world, noiseConfig);
 		}
-		return super.getColumnSample(x, z, world);
+		return super.getColumnSample(x, z, world, noiseConfig);
 	}
 }

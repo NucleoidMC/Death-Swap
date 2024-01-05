@@ -15,14 +15,12 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
-import net.minecraft.world.Heightmap;
 import xyz.nucleoid.plasmid.game.GameCloseReason;
 import xyz.nucleoid.plasmid.game.GameSpace;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
@@ -127,7 +125,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	@Override
 	public ActionResult onDeath(ServerPlayerEntity player, DamageSource source) {
 		if (this.players.contains(player) && this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES)) {
-			Text message = player.getDamageTracker().getDeathMessage().shallowCopy().formatted(Formatting.RED);
+			Text message = player.getDamageTracker().getDeathMessage().copy().formatted(Formatting.RED);
 			this.gameSpace.getPlayers().sendMessage(message);
 		}
 		this.eliminate(player, true);
@@ -156,9 +154,9 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	private MutableText getEndingMessage() {
 		if (this.players.size() == 1) {
 			ServerPlayerEntity winner = this.players.iterator().next();
-			return new TranslatableText("text.deathswap.win", winner.getDisplayName());
+			return Text.translatable("text.deathswap.win", winner.getDisplayName());
 		}
-		return new TranslatableText("text.deathswap.win.none");
+		return Text.translatable("text.deathswap.win.none");
 	}
 
 	private boolean eliminate(ServerPlayerEntity player, boolean remove) {
@@ -184,7 +182,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	}
 
 	private void sendEliminateMessage(ServerPlayerEntity player, String suffix) {
-		Text message = new TranslatableText("text.deathswap.eliminated" + suffix, player.getDisplayName()).formatted(Formatting.RED);
+		Text message = Text.translatable("text.deathswap.eliminated" + suffix, player.getDisplayName()).formatted(Formatting.RED);
 		this.gameSpace.getPlayers().sendMessage(message);
 	}
 
@@ -200,7 +198,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		int x = MathHelper.nextInt(world.getRandom(), map.getBox().getMinX(), map.getBox().getMaxX());
 		int z = MathHelper.nextInt(world.getRandom(), map.getBox().getMinZ(), map.getBox().getMaxZ());
 
-		int surfaceY = map.getChunkGenerator().getHeight(x, z, Heightmap.Type.WORLD_SURFACE, world);
+		int surfaceY = map.getSurfaceY(world, x, z);
 		float yaw = DeathSwapActivePhase.getSpawnYaw(world);
 
 		player.teleport(world, x + 0.5, surfaceY, z + 0.5, yaw, 0);
@@ -210,7 +208,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		int x = mapConfig.getX() * 8;
 		int z = mapConfig.getZ() * 8;
 
-		int surfaceY = map.getChunkGenerator().getHeight(x, z, Heightmap.Type.WORLD_SURFACE, world);
+		int surfaceY = map.getSurfaceY(world, x, z);
 
 		return new Vec3d(x + 0.5, surfaceY, z + 0.5);
 	}

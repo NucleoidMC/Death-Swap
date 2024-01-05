@@ -1,0 +1,11 @@
+{
+	"required": true,
+	"package": "io.github.haykam821.deathswap.mixin",
+	"compatibilityLevel": "JAVA_17",
+	"mixins": [
+		"ThreadedAnvilChunkStorageMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

@@ -1,8 +1,8 @@
 {
 	"type": "deathswap:death_swap",
 	"map": {
-		"dimension_type": "minecraft:overworld",
-		"settings": "minecraft:amplified"
+		"dimension_options": "minecraft:overworld",
+		"preset": "minecraft:amplified"
 	},
 	"players": {
 		"min": 1,

@@ -12,9 +12,7 @@ import io.github.haykam821.deathswap.game.phase.DeathSwapActivePhase;
 import net.minecraft.SharedConstants;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
-import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
@@ -26,7 +24,7 @@ public class DeathSwapTimer {
 	private static final BossBar.Color WARNING_COLOR = BossBar.Color.YELLOW;
 	private static final Formatting NO_SWAP_FORMATTING = Formatting.GREEN;
 	private static final Formatting WARNING_FORMATTING = Formatting.YELLOW;
-	private static final Text NO_SWAP_TITLE = new TranslatableText("text.deathswap.timer.no_swap");
+	private static final Text NO_SWAP_TITLE = Text.translatable("text.deathswap.timer.no_swap");
 
 	private static final DecimalFormat MINUTES_FORMAT = new DecimalFormat("#.#", new DecimalFormatSymbols(Locale.ROOT));
 	private final DeathSwapActivePhase phase;
@@ -75,7 +73,7 @@ public class DeathSwapTimer {
 			Vec3d position = positions.get(index);
 			player.teleport(position.getX(), position.getY(), position.getZ());
 
-			Text message = new TranslatableText("text.deathswap.timer.swap", previousPlayer.getDisplayName()).formatted(NO_SWAP_FORMATTING);
+			Text message = Text.translatable("text.deathswap.timer.swap", previousPlayer.getDisplayName()).formatted(NO_SWAP_FORMATTING);
 			player.sendMessage(message, true);
 
 			previousPlayer = player;
@@ -108,14 +106,14 @@ public class DeathSwapTimer {
 			double minutes = seconds / 60d;
 
 			if (minutes > 1.05) {
-				return new TranslatableText("text.deathswap.timer.warning.minutes", MINUTES_FORMAT.format(minutes));
+				return Text.translatable("text.deathswap.timer.warning.minutes", MINUTES_FORMAT.format(minutes));
 			} else {
-				return new TranslatableText("text.deathswap.timer.warning.minute");
+				return Text.translatable("text.deathswap.timer.warning.minute");
 			}
 		} else if (seconds == 1) {
-			return new TranslatableText("text.deathswap.timer.warning.second");
+			return Text.translatable("text.deathswap.timer.warning.second");
 		} else {
-			return new TranslatableText("text.deathswap.timer.warning.seconds", seconds);
+			return Text.translatable("text.deathswap.timer.warning.seconds", seconds);
 		}
 	}
 
@@ -124,7 +122,7 @@ public class DeathSwapTimer {
 	}
 
 	private Text getBarTitle(Text customText, Formatting formatting) {
-		Text gameName = new TranslatableText("gameType.deathswap.death_swap").formatted(Formatting.BOLD);
-		return new LiteralText("").append(gameName).append(" - ").append(customText).formatted(formatting);
+		Text gameName = Text.translatable("gameType.deathswap.death_swap").formatted(Formatting.BOLD);
+		return Text.empty().append(gameName).append(" - ").append(customText).formatted(formatting);
 	}
 }

@@ -4,12 +4,13 @@ import io.github.haykam821.deathswap.game.DeathSwapConfig;
 import io.github.haykam821.deathswap.game.map.DeathSwapMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.registry.RegistryEntry;
+import net.minecraft.util.math.random.RandomSeed;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
@@ -45,10 +46,11 @@ public class DeathSwapWaitingPhase implements PlayerAttackEntityEvent, GamePlaye
 	public static GameOpenProcedure open(GameOpenContext<DeathSwapConfig> context) {
 		DeathSwapConfig config = context.config();
 
-		RegistryEntry<DimensionType> dimensionType = config.getMapConfig().getDimensionType();
+		RegistryEntry<DimensionType> dimensionType = config.getMapConfig().getDimensionOptions().dimensionTypeEntry();
 		DeathSwapMap map = new DeathSwapMap(context.server(), config.getMapConfig(), dimensionType.value());
 
 		RuntimeWorldConfig worldConfig = new RuntimeWorldConfig()
+			.setSeed(RandomSeed.getSeed())
 			.setDimensionType(dimensionType)
 			.setGenerator(map.getChunkGenerator())
 			.setGameRule(GameRules.DO_MOB_SPAWNING, true)

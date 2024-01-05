@@ -1,8 +1,8 @@
 {
 	"type": "deathswap:death_swap",
 	"map": {
-		"dimension_type": "minecraft:the_end",
-		"settings": "minecraft:end",
+		"dimension_options": "minecraft:the_end",
+		"preset": "minecraft:normal",
 		"x": 10,
 		"z": 10
 	},
