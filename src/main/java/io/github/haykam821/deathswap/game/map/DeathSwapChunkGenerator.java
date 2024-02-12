@@ -23,9 +23,10 @@ import net.minecraft.world.gen.chunk.ChunkGeneratorSettings;
 import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import net.minecraft.world.gen.noise.NoiseConfig;
+import xyz.nucleoid.fantasy.util.ChunkGeneratorSettingsProvider;
 import xyz.nucleoid.plasmid.game.world.generator.GameChunkGenerator;
 
-public final class DeathSwapChunkGenerator extends GameChunkGenerator {
+public final class DeathSwapChunkGenerator extends GameChunkGenerator implements ChunkGeneratorSettingsProvider {
 	private final DeathSwapMapConfig mapConfig;
 	private final ChunkGenerator chunkGenerator;
 
@@ -36,6 +37,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator {
 		this.chunkGenerator = mapConfig.getDimensionOptions().chunkGenerator();
 	}
 
+	@Override
 	public ChunkGeneratorSettings getSettings() {
 		if (this.chunkGenerator instanceof NoiseChunkGenerator noiseChunkGenerator) {
 			return noiseChunkGenerator.getSettings().value();

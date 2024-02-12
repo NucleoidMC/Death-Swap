@@ -16,9 +16,6 @@
 			"io.github.haykam821.deathswap.Main"
 		]
 	},
-	"mixins": [
-		"deathswap.mixin.json"
-	],
 	"license": "MIT",
 	"icon": "assets/deathswap/icon.png",
 	"depends": {
