@@ -5,6 +5,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.deathswap.game.map.DeathSwapMapConfig;
 import net.minecraft.SharedConstants;
+import net.minecraft.util.math.intprovider.ConstantIntProvider;
+import net.minecraft.util.math.intprovider.IntProvider;
 import xyz.nucleoid.plasmid.game.common.config.PlayerConfig;
 
 public class DeathSwapConfig {
@@ -12,6 +14,7 @@ public class DeathSwapConfig {
 		return instance.group(
 			PlayerConfig.CODEC.fieldOf("players").forGetter(DeathSwapConfig::getPlayerConfig),
 			DeathSwapMapConfig.CODEC.fieldOf("map").forGetter(DeathSwapConfig::getMapConfig),
+			IntProvider.NON_NEGATIVE_CODEC.optionalFieldOf("ticks_until_close", ConstantIntProvider.create(SharedConstants.TICKS_PER_SECOND * 10)).forGetter(DeathSwapConfig::getTicksUntilClose),
 			Codec.INT.optionalFieldOf("initial_swap_ticks", SharedConstants.TICKS_PER_MINUTE * 5).forGetter(DeathSwapConfig::getInitialSwapTicks),
 			Codec.INT.optionalFieldOf("swap_ticks", SharedConstants.TICKS_PER_MINUTE * 2).forGetter(DeathSwapConfig::getSwapTicks),
 			Codec.INT.optionalFieldOf("swap_warning_ticks", SharedConstants.TICKS_PER_SECOND * 30).forGetter(DeathSwapConfig::getSwapWarningTicks),
@@ -21,14 +24,16 @@ public class DeathSwapConfig {
 
 	private final PlayerConfig playerConfig;
 	private final DeathSwapMapConfig mapConfig;
+	private final IntProvider ticksUntilClose;
 	private final int initialSwapTicks;
 	private final int swapTicks;
 	private final int swapWarningTicks;
 	private final int swapEliminationCollectionTicks;
 
-	public DeathSwapConfig(PlayerConfig playerConfig, DeathSwapMapConfig mapConfig, int initialSwapTicks, int swapTicks, int swapWarningTicks, int swapEliminationCollectionTicks) {
+	public DeathSwapConfig(PlayerConfig playerConfig, DeathSwapMapConfig mapConfig, IntProvider ticksUntilClose, int initialSwapTicks, int swapTicks, int swapWarningTicks, int swapEliminationCollectionTicks) {
 		this.playerConfig = playerConfig;
 		this.mapConfig = mapConfig;
+		this.ticksUntilClose = ticksUntilClose;
 		this.initialSwapTicks = initialSwapTicks;
 		this.swapTicks = swapTicks;
 		this.swapWarningTicks = swapWarningTicks;
@@ -41,6 +46,10 @@ public class DeathSwapConfig {
 
 	public DeathSwapMapConfig getMapConfig() {
 		return this.mapConfig;
+	}
+
+	public IntProvider getTicksUntilClose() {
+		return this.ticksUntilClose;
 	}
 
 	public int getInitialSwapTicks() {

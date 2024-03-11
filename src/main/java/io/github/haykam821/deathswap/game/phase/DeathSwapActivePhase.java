@@ -29,9 +29,10 @@ import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
 import xyz.nucleoid.plasmid.game.player.PlayerOffer;
 import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
 import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
-public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActivityEvents.Tick, GamePlayerEvents.Offer, PlayerDeathEvent, GamePlayerEvents.Remove {
+public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActivityEvents.Tick, GamePlayerEvents.Offer, PlayerDamageEvent, PlayerDeathEvent, GamePlayerEvents.Remove {
 	private final GameSpace gameSpace;
 	private final ServerWorld world;
 	private final DeathSwapMap map;
@@ -39,7 +40,9 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	private final Set<ServerPlayerEntity> players;
 	private final DeathSwapTimer timer;
 	private final EliminationCollector eliminationCollector = new EliminationCollector(this);
+
 	private boolean singleplayer;
+	private int ticksUntilClose = -1;
 
 	public DeathSwapActivePhase(GameSpace gameSpace, ServerWorld world, GlobalWidgets widgets, DeathSwapMap map, DeathSwapConfig config, Set<ServerPlayerEntity> players) {
 		this.gameSpace = gameSpace;
@@ -68,6 +71,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 			activity.listen(GameActivityEvents.ENABLE, phase);
 			activity.listen(GameActivityEvents.TICK, phase);
 			activity.listen(GamePlayerEvents.OFFER, phase);
+			activity.listen(PlayerDamageEvent.EVENT, phase);
 			activity.listen(PlayerDeathEvent.EVENT, phase);
 			activity.listen(GamePlayerEvents.REMOVE, phase);
 		});
@@ -86,6 +90,18 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	
 	@Override
 	public void onTick() {
+		// Decrease ticks until game end to zero
+		if (this.isGameEnding()) {
+			if (this.ticksUntilClose == 0) {
+				this.gameSpace.close(GameCloseReason.FINISHED);
+			}
+
+			this.ticksUntilClose -= 1;
+			this.eliminationCollector.tick();
+
+			return;
+		}
+
 		this.timer.tick();
 		this.eliminationCollector.tick();
 
@@ -105,7 +121,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 			if (this.players.size() == 1 && this.singleplayer) return;
 
 			this.gameSpace.getPlayers().sendMessage(this.getEndingMessage().formatted(Formatting.GOLD));
-			this.gameSpace.close(GameCloseReason.FINISHED);
+			this.ticksUntilClose = this.config.getTicksUntilClose().get(this.world.getRandom());
 		}
 	}
 
@@ -123,7 +139,17 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	}
 
 	@Override
+	public ActionResult onDamage(ServerPlayerEntity player, DamageSource source, float amount) {
+		return this.isGameEnding() ? ActionResult.FAIL : ActionResult.PASS;
+	}
+
+	@Override
 	public ActionResult onDeath(ServerPlayerEntity player, DamageSource source) {
+		if (this.isGameEnding()) {
+			DeathSwapActivePhase.spawn(this.world, this.map, this.config.getMapConfig(), player);
+			return ActionResult.FAIL;
+		}
+
 		if (this.players.contains(player) && this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES)) {
 			Text message = player.getDamageTracker().getDeathMessage().copy().formatted(Formatting.RED);
 			this.gameSpace.getPlayers().sendMessage(message);
@@ -182,6 +208,10 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	}
 
 	private void sendEliminateMessage(ServerPlayerEntity player, String suffix) {
+		if (this.isGameEnding()) {
+			return;
+		}
+
 		Text message = Text.translatable("text.deathswap.eliminated" + suffix, player.getDisplayName()).formatted(Formatting.RED);
 		this.gameSpace.getPlayers().sendMessage(message);
 	}
@@ -192,6 +222,10 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 
 	public static float getSpawnYaw(ServerWorld world) {
 		return world.getRandom().nextInt(3) * 90;
+	}
+
+	public boolean isGameEnding() {
+		return this.ticksUntilClose >= 0;
 	}
 
 	public static void spawn(ServerWorld world, DeathSwapMap map, DeathSwapMapConfig mapConfig, ServerPlayerEntity player) {
