@@ -16,6 +16,7 @@
 			"io.github.haykam821.deathswap.Main"
 		]
 	},
+	"accessWidener": "deathswap.accesswidener",
 	"license": "MIT",
 	"icon": "assets/deathswap/icon.png",
 	"depends": {

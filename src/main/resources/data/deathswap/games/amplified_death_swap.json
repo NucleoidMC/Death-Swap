@@ -2,7 +2,8 @@
 	"type": "deathswap:death_swap",
 	"map": {
 		"dimension_options": "minecraft:overworld",
-		"preset": "minecraft:amplified"
+		"preset": "minecraft:amplified",
+		"excluded_biomes": "#minecraft:is_ocean"
 	},
 	"players": {
 		"min": 1,

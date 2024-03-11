@@ -31,10 +31,10 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 	private final ChunkGenerator chunkGenerator;
 
 	public DeathSwapChunkGenerator(MinecraftServer server, DeathSwapMapConfig mapConfig) {
-		super(mapConfig.getDimensionOptions().chunkGenerator().getBiomeSource());
+		super(mapConfig.getChunkGenerator().getBiomeSource());
 
 		this.mapConfig = mapConfig;
-		this.chunkGenerator = mapConfig.getDimensionOptions().chunkGenerator();
+		this.chunkGenerator = mapConfig.getChunkGenerator();
 	}
 
 	@Override
