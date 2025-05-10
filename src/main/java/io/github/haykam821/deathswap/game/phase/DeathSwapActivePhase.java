@@ -15,24 +15,25 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.GameRules;
-import xyz.nucleoid.plasmid.game.GameCloseReason;
-import xyz.nucleoid.plasmid.game.GameSpace;
-import xyz.nucleoid.plasmid.game.common.GlobalWidgets;
-import xyz.nucleoid.plasmid.game.event.GameActivityEvents;
-import xyz.nucleoid.plasmid.game.event.GamePlayerEvents;
-import xyz.nucleoid.plasmid.game.player.PlayerOffer;
-import xyz.nucleoid.plasmid.game.player.PlayerOfferResult;
-import xyz.nucleoid.plasmid.game.rule.GameRuleType;
+import xyz.nucleoid.plasmid.api.game.GameCloseReason;
+import xyz.nucleoid.plasmid.api.game.GameSpace;
+import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
+import xyz.nucleoid.plasmid.api.game.event.GameActivityEvents;
+import xyz.nucleoid.plasmid.api.game.event.GamePlayerEvents;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptor;
+import xyz.nucleoid.plasmid.api.game.player.JoinAcceptorResult;
+import xyz.nucleoid.plasmid.api.game.player.JoinOffer;
+import xyz.nucleoid.plasmid.api.game.rule.GameRuleType;
+import xyz.nucleoid.stimuli.event.EventResult;
 import xyz.nucleoid.stimuli.event.player.PlayerDamageEvent;
 import xyz.nucleoid.stimuli.event.player.PlayerDeathEvent;
 
-public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActivityEvents.Tick, GamePlayerEvents.Offer, PlayerDamageEvent, PlayerDeathEvent, GamePlayerEvents.Remove {
+public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActivityEvents.Tick, GamePlayerEvents.Accept, PlayerDamageEvent, PlayerDeathEvent, GamePlayerEvents.Remove {
 	private final GameSpace gameSpace;
 	private final ServerWorld world;
 	private final DeathSwapMap map;
@@ -56,7 +57,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	public static void open(GameSpace gameSpace, ServerWorld world, DeathSwapMap map, DeathSwapConfig config) {
 		gameSpace.setActivity(activity -> {
 			GlobalWidgets widgets = GlobalWidgets.addTo(activity);
-			Set<ServerPlayerEntity> players = Sets.newHashSet(gameSpace.getPlayers());
+			Set<ServerPlayerEntity> players = Sets.newHashSet(gameSpace.getPlayers().participants());
 			DeathSwapActivePhase phase = new DeathSwapActivePhase(gameSpace, world, widgets, map, config, players);
 
 			// Rules
@@ -70,7 +71,8 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 			// Listeners
 			activity.listen(GameActivityEvents.ENABLE, phase);
 			activity.listen(GameActivityEvents.TICK, phase);
-			activity.listen(GamePlayerEvents.OFFER, phase);
+			activity.listen(GamePlayerEvents.ACCEPT, phase);
+			activity.listen(GamePlayerEvents.OFFER, JoinOffer::acceptSpectators);
 			activity.listen(PlayerDamageEvent.EVENT, phase);
 			activity.listen(PlayerDeathEvent.EVENT, phase);
 			activity.listen(GamePlayerEvents.REMOVE, phase);
@@ -85,6 +87,11 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		for (ServerPlayerEntity player : this.players) {
 			player.changeGameMode(GameMode.SURVIVAL);
 			DeathSwapActivePhase.spawn(this.world, this.map, this.config.getMapConfig(), player);
+		}
+
+		for (ServerPlayerEntity player : this.gameSpace.getPlayers().spectators()) {
+			this.setSpectator(player);
+			DeathSwapActivePhase.spawnAtCenter(this.world, this.map, this.config.getMapConfig(), player);
 		}
 	}
 	
@@ -126,10 +133,10 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	}
 
 	@Override
-	public PlayerOfferResult onOfferPlayer(PlayerOffer offer) {
-		return offer.accept(this.world, DeathSwapActivePhase.getCenterPos(this.world, this.map, this.config.getMapConfig())).and(() -> {
-			offer.player().setBodyYaw(DeathSwapActivePhase.getSpawnYaw(world));
-			this.setSpectator(offer.player());
+	public JoinAcceptorResult onAcceptPlayers(JoinAcceptor acceptor) {
+		return acceptor.teleport(this.world, DeathSwapActivePhase.getCenterPos(this.world, this.map, this.config.getMapConfig())).thenRunForEach(player -> {
+			player.setBodyYaw(DeathSwapActivePhase.getSpawnYaw(world));
+			this.setSpectator(player);
 		});
 	}
 
@@ -139,15 +146,15 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 	}
 
 	@Override
-	public ActionResult onDamage(ServerPlayerEntity player, DamageSource source, float amount) {
-		return this.isGameEnding() ? ActionResult.FAIL : ActionResult.PASS;
+	public EventResult onDamage(ServerPlayerEntity player, DamageSource source, float amount) {
+		return this.isGameEnding() ? EventResult.DENY : EventResult.PASS;
 	}
 
 	@Override
-	public ActionResult onDeath(ServerPlayerEntity player, DamageSource source) {
+	public EventResult onDeath(ServerPlayerEntity player, DamageSource source) {
 		if (this.isGameEnding()) {
 			DeathSwapActivePhase.spawn(this.world, this.map, this.config.getMapConfig(), player);
-			return ActionResult.FAIL;
+			return EventResult.DENY;
 		}
 
 		if (this.players.contains(player) && this.world.getGameRules().getBoolean(GameRules.SHOW_DEATH_MESSAGES)) {
@@ -156,7 +163,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		}
 		this.eliminate(player, true);
 
-		return ActionResult.FAIL;
+		return EventResult.DENY;
 	}
 
 	// Getters
@@ -235,7 +242,7 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		int surfaceY = map.getSurfaceY(world, x, z);
 		float yaw = DeathSwapActivePhase.getSpawnYaw(world);
 
-		player.teleport(world, x + 0.5, surfaceY, z + 0.5, yaw, 0);
+		player.teleport(world, x + 0.5, surfaceY, z + 0.5, Set.of(), yaw, 0, true);
 	}
 
 	public static Vec3d getCenterPos(ServerWorld world, DeathSwapMap map, DeathSwapMapConfig mapConfig) {
@@ -251,6 +258,6 @@ public class DeathSwapActivePhase implements GameActivityEvents.Enable, GameActi
 		Vec3d pos = DeathSwapActivePhase.getCenterPos(world, map, mapConfig);
 		float yaw = DeathSwapActivePhase.getSpawnYaw(world);
 
-		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), yaw, 0);
+		player.teleport(world, pos.getX(), pos.getY(), pos.getZ(), Set.of(), yaw, 0, true);
 	}
 }

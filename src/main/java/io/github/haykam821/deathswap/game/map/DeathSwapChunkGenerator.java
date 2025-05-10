@@ -1,7 +1,6 @@
 package io.github.haykam821.deathswap.game.map;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.server.MinecraftServer;
@@ -15,7 +14,6 @@ import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.world.biome.source.BiomeAccess;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.GenerationStep.Carver;
 import net.minecraft.world.gen.StructureAccessor;
 import net.minecraft.world.gen.chunk.Blender;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
@@ -24,7 +22,7 @@ import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
 import net.minecraft.world.gen.chunk.VerticalBlockSample;
 import net.minecraft.world.gen.noise.NoiseConfig;
 import xyz.nucleoid.fantasy.util.ChunkGeneratorSettingsProvider;
-import xyz.nucleoid.plasmid.game.world.generator.GameChunkGenerator;
+import xyz.nucleoid.plasmid.api.game.world.generator.GameChunkGenerator;
 
 public final class DeathSwapChunkGenerator extends GameChunkGenerator implements ChunkGeneratorSettingsProvider {
 	private final DeathSwapMapConfig mapConfig;
@@ -55,11 +53,11 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 	}
 
 	@Override
-	public CompletableFuture<Chunk> populateBiomes(Executor executor, NoiseConfig noiseConfig, Blender blender, StructureAccessor structures, Chunk chunk) {
+	public CompletableFuture<Chunk> populateBiomes(NoiseConfig noiseConfig, Blender blender, StructureAccessor structures, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			return this.chunkGenerator.populateBiomes(executor, noiseConfig, blender, structures, chunk);
+			return this.chunkGenerator.populateBiomes(noiseConfig, blender, structures, chunk);
 		} else {
-			return super.populateBiomes(executor, noiseConfig, blender, structures, chunk);
+			return super.populateBiomes(noiseConfig, blender, structures, chunk);
 		}
 	}
 
@@ -77,11 +75,11 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 	}
 
 	@Override
-	public CompletableFuture<Chunk> populateNoise(Executor executor, Blender blender, NoiseConfig noiseConfig, StructureAccessor structures, Chunk chunk) {
+	public CompletableFuture<Chunk> populateNoise(Blender blender, NoiseConfig noiseConfig, StructureAccessor structures, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			return this.chunkGenerator.populateNoise(executor, blender, noiseConfig, structures, chunk);
+			return this.chunkGenerator.populateNoise(blender, noiseConfig, structures, chunk);
 		}
-		return super.populateNoise(executor, blender, noiseConfig, structures, chunk);
+		return super.populateNoise(blender, noiseConfig, structures, chunk);
 	}
 
 	@Override
@@ -117,7 +115,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 		BlockPos.Mutable pos = new BlockPos.Mutable();
 
 		int bottomY = chunk.getBottomY();
-		int topY = chunk.getTopY() - 1;
+		int topY = chunk.getTopYInclusive();
 
 		// Top
 		for (int x = 0; x < 16; x++) {
@@ -177,9 +175,9 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 	}
 
 	@Override
-	public void carve(ChunkRegion region, long seed, NoiseConfig noiseConfig, BiomeAccess access, StructureAccessor structures, Chunk chunk, Carver carver) {
+	public void carve(ChunkRegion region, long seed, NoiseConfig noiseConfig, BiomeAccess access, StructureAccessor structures, Chunk chunk) {
 		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.carve(region, seed, noiseConfig, access, structures, chunk, carver);
+			this.chunkGenerator.carve(region, seed, noiseConfig, access, structures, chunk);
 		}
 	}
 

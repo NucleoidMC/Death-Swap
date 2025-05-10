@@ -7,6 +7,7 @@ import net.minecraft.block.AirBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import xyz.nucleoid.packettweaker.PacketContext;
 
 public class BarrierAirBlock extends AirBlock implements PolymerBlock {
 	public static final MapCodec<AirBlock> CODEC = Block.createCodec(BarrierAirBlock::new);
@@ -21,7 +22,7 @@ public class BarrierAirBlock extends AirBlock implements PolymerBlock {
 	}
 
 	@Override
-	public Block getPolymerBlock(BlockState state) {
-		return Blocks.BARRIER;
+	public BlockState getPolymerBlockState(BlockState state, PacketContext context) {
+		return Blocks.BARRIER.getDefaultState();
 	}
 }

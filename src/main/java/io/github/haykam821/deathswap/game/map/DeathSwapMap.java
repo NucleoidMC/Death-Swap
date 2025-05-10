@@ -35,7 +35,7 @@ public final class DeathSwapMap {
 
 	public int getSurfaceY(ServerWorld world, int x, int z) {
 		int bottomY = world.getBottomY();
-		int maxY = Math.min(world.getTopY(), bottomY + world.getLogicalHeight()) - 1;
+		int maxY = Math.min(world.getTopYInclusive(), bottomY + world.getLogicalHeight() - 1);
 
 		BlockPos.Mutable pos = new BlockPos.Mutable(x, maxY, z);
 		Chunk chunk = world.getChunk(pos);

@@ -9,8 +9,8 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import xyz.nucleoid.plasmid.game.player.PlayerIterable;
-import xyz.nucleoid.plasmid.util.PlayerRef;
+import xyz.nucleoid.plasmid.api.game.player.PlayerIterable;
+import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
 public class EliminationCollector {
 	private static final int FADE_IN_TICKS = 20;
