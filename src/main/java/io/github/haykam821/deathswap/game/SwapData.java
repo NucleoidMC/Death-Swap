@@ -23,6 +23,6 @@ public record SwapData(ServerWorld world, Vec3d pos, Entity vehicle, List<Entity
 	}
 
 	public static SwapData from(ServerPlayerEntity player) {
-		return new SwapData(player.getServerWorld(), player.getPos(), player.getVehicle(), player.getPassengerList());
+		return new SwapData(player.getWorld(), player.getPos(), player.getVehicle(), player.getPassengerList());
 	}
 }
