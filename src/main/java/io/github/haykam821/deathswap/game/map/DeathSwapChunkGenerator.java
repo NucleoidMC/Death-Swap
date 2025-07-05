@@ -121,7 +121,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 		for (int x = 0; x < 16; x++) {
 			for (int z = 0; z < 16; z++) {
 				pos.set(x + originX, topY, z + originZ);
-				chunk.setBlockState(pos, this.getTopBarrierState(random, pos), false);
+				chunk.setBlockState(pos, this.getTopBarrierState(random, pos));
 			}
 		}
 
@@ -130,7 +130,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 			for (int x = 0; x < 16; x++) {
 				for (int y = bottomY; y < topY; y++) {
 					pos.set(x + originX, y, originZ);
-					chunk.setBlockState(pos, this.getBarrierState(random, pos), false);
+					chunk.setBlockState(pos, this.getBarrierState(random, pos));
 				}
 			}
 		}
@@ -140,7 +140,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 			for (int z = 0; z < 16; z++) {
 				for (int y = bottomY; y < topY; y++) {
 					pos.set(originX + 15, y, z + originZ);
-					chunk.setBlockState(pos, this.getBarrierState(random, pos), false);
+					chunk.setBlockState(pos, this.getBarrierState(random, pos));
 				}
 			}
 		}
@@ -150,7 +150,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 			for (int x = 0; x < 16; x++) {
 				for (int y = bottomY; y < topY; y++) {
 					pos.set(x + originX, y, originZ + 15);
-					chunk.setBlockState(pos, this.getBarrierState(random, pos), false);
+					chunk.setBlockState(pos, this.getBarrierState(random, pos));
 				}
 			}
 		}
@@ -160,7 +160,7 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 			for (int z = 0; z < 16; z++) {
 				for (int y = bottomY; y < topY; y++) {
 					pos.set(originX, y, z + originZ);
-					chunk.setBlockState(pos, this.getBarrierState(random, pos), false);
+					chunk.setBlockState(pos, this.getBarrierState(random, pos));
 				}
 			}
 		}
