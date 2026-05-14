@@ -1,19 +1,19 @@
 package io.github.haykam821.deathswap.game.map;
 
-import net.minecraft.entity.EntityType;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockBox;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.dimension.DimensionType;
 
 public final class DeathSwapMap {
 	private final DeathSwapMapConfig mapConfig;
 	private final DeathSwapChunkGenerator chunkGenerator;
-	private final BlockBox box;
+	private final BoundingBox box;
 
 	public DeathSwapMap(MinecraftServer server, DeathSwapMapConfig mapConfig, DimensionType dimensionType) {
 		this.mapConfig = mapConfig;
@@ -22,23 +22,23 @@ public final class DeathSwapMap {
 		int minY = dimensionType.minY();
 		int maxY = minY + dimensionType.height();
 
-		this.box = new BlockBox(1, minY + 1, 1, mapConfig.getX() * 16 - 2, maxY - 1, mapConfig.getZ() * 16 - 2);
+		this.box = new BoundingBox(1, minY + 1, 1, mapConfig.getX() * 16 - 2, maxY - 1, mapConfig.getZ() * 16 - 2);
 	}
 
 	public DeathSwapChunkGenerator getChunkGenerator() {
 		return this.chunkGenerator;
 	}
 
-	public BlockBox getBox() {
+	public BoundingBox getBox() {
 		return this.box;
 	}
 
-	public int getSurfaceY(ServerWorld world, int x, int z) {
-		int bottomY = world.getBottomY();
-		int maxY = Math.min(world.getTopYInclusive(), bottomY + world.getLogicalHeight() - 1);
+	public int getSurfaceY(ServerLevel level, int x, int z) {
+		int bottomY = level.getMinY();
+		int maxY = Math.min(level.getMaxY(), bottomY + level.getLogicalHeight() - 1);
 
-		BlockPos.Mutable pos = new BlockPos.Mutable(x, maxY, z);
-		Chunk chunk = world.getChunk(pos);
+		BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(x, maxY, z);
+		ChunkAccess chunk = level.getChunk(pos);
 
 		int air = 0;
 
@@ -56,7 +56,7 @@ public final class DeathSwapMap {
 		}
 
 		if (pos.getY() == bottomY) {
-			pos.setY(chunk.sampleHeightmap(Heightmap.Type.WORLD_SURFACE, x, z));
+			pos.setY(chunk.getHeight(Heightmap.Types.WORLD_SURFACE, x, z));
 		}
 
 		return pos.getY() + 1;

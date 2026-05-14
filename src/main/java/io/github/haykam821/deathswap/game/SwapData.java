@@ -2,27 +2,27 @@ package io.github.haykam821.deathswap.game;
 
 import java.util.List;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.network.packet.s2c.play.PositionFlag;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Relative;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 
-public record SwapData(ServerWorld world, Vec3d pos, Entity vehicle, List<Entity> passengers) {
-	public void apply(ServerPlayerEntity player) {
+public record SwapData(ServerLevel world, Vec3 pos, Entity vehicle, List<Entity> passengers) {
+	public void apply(ServerPlayer player) {
 		player.stopRiding();
-		player.teleport(world, this.pos.getX(), this.pos.getY(), this.pos.getZ(), PositionFlag.ROT, 0, 0, false);
+		player.teleportTo(world, this.pos.x(), this.pos.y(), this.pos.z(), Relative.ROTATION, 0, 0, false);
 
 		if (this.vehicle != null) {
-			player.startRiding(this.vehicle, true);
+			player.startRiding(this.vehicle, true, true);
 		}
 
 		for (Entity passenger : this.passengers) {
-			passenger.startRiding(player, true);
+			passenger.startRiding(player, true, true);
 		}
 	}
 
-	public static SwapData from(ServerPlayerEntity player) {
-		return new SwapData(player.getWorld(), player.getPos(), player.getVehicle(), player.getPassengerList());
+	public static SwapData from(ServerPlayer player) {
+		return new SwapData(player.level(), player.position(), player.getVehicle(), player.getPassengers());
 	}
 }

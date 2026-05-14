@@ -8,40 +8,40 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.deathswap.Main;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.RegistryCodecs;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.registry.entry.RegistryEntryList;
-import net.minecraft.registry.entry.RegistryFixedCodec;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.source.MultiNoiseBiomeSource;
-import net.minecraft.world.biome.source.util.MultiNoiseUtil;
-import net.minecraft.world.biome.source.util.MultiNoiseUtil.NoiseHypercube;
-import net.minecraft.world.dimension.DimensionOptions;
-import net.minecraft.world.dimension.DimensionOptionsRegistryHolder;
-import net.minecraft.world.gen.WorldPreset;
-import net.minecraft.world.gen.chunk.ChunkGenerator;
-import net.minecraft.world.gen.chunk.NoiseChunkGenerator;
-import net.minecraft.world.gen.stateprovider.BlockStateProvider;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.core.RegistryCodecs;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Holder;
+import net.minecraft.core.HolderSet;
+import net.minecraft.resources.RegistryFixedCodec;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
+import net.minecraft.world.level.biome.Climate;
+import net.minecraft.world.level.biome.Climate.ParameterPoint;
+import net.minecraft.world.level.dimension.LevelStem;
+import net.minecraft.world.level.levelgen.WorldDimensions;
+import net.minecraft.world.level.levelgen.presets.WorldPreset;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 
 public class DeathSwapMapConfig {
 	public static final Codec<DeathSwapMapConfig> CODEC = RecordCodecBuilder.create(instance -> {
 		return instance.group(
-			RegistryFixedCodec.of(RegistryKeys.WORLD_PRESET).fieldOf("preset").forGetter(mapConfig -> mapConfig.worldPreset),
-			RegistryKey.createCodec(RegistryKeys.DIMENSION).optionalFieldOf("dimension_options", DimensionOptions.OVERWORLD).forGetter(mapConfig -> mapConfig.dimensionOptions),
-			RegistryCodecs.entryList(RegistryKeys.BIOME).optionalFieldOf("excluded_biomes").forGetter(mapConfig -> mapConfig.excludedBiomes),
-			BlockStateProvider.TYPE_CODEC.optionalFieldOf("barrier", BlockStateProvider.of(Blocks.BARRIER)).forGetter(DeathSwapMapConfig::getBarrier),
-			BlockStateProvider.TYPE_CODEC.optionalFieldOf("top_barrier", BlockStateProvider.of(Main.BARRIER_AIR)).forGetter(DeathSwapMapConfig::getTopBarrier),
+			RegistryFixedCodec.create(Registries.WORLD_PRESET).fieldOf("preset").forGetter(mapConfig -> mapConfig.worldPreset),
+			ResourceKey.codec(Registries.LEVEL_STEM).optionalFieldOf("dimension_options", LevelStem.OVERWORLD).forGetter(mapConfig -> mapConfig.dimensionOptions),
+			RegistryCodecs.homogeneousList(Registries.BIOME).optionalFieldOf("excluded_biomes").forGetter(mapConfig -> mapConfig.excludedBiomes),
+			BlockStateProvider.CODEC.optionalFieldOf("barrier", BlockStateProvider.simple(Blocks.BARRIER)).forGetter(DeathSwapMapConfig::getBarrier),
+			BlockStateProvider.CODEC.optionalFieldOf("top_barrier", BlockStateProvider.simple(Main.BARRIER_AIR)).forGetter(DeathSwapMapConfig::getTopBarrier),
 			Codec.INT.optionalFieldOf("x", 32).forGetter(DeathSwapMapConfig::getX),
 			Codec.INT.optionalFieldOf("z", 32).forGetter(DeathSwapMapConfig::getZ)
 		).apply(instance, DeathSwapMapConfig::new);
 	});
 
-	private final RegistryEntry<WorldPreset> worldPreset;
-	private final RegistryKey<DimensionOptions> dimensionOptions;
-	private final Optional<RegistryEntryList<Biome>> excludedBiomes;
+	private final Holder<WorldPreset> worldPreset;
+	private final ResourceKey<LevelStem> dimensionOptions;
+	private final Optional<HolderSet<Biome>> excludedBiomes;
 	private final BlockStateProvider barrier;
 	private final BlockStateProvider topBarrier;
 	private final int x;
@@ -49,7 +49,7 @@ public class DeathSwapMapConfig {
 
 	private ChunkGenerator chunkGenerator;
 
-	public DeathSwapMapConfig(RegistryEntry<WorldPreset> worldPreset, RegistryKey<DimensionOptions> dimensionOptions, Optional<RegistryEntryList<Biome>> excludedBiomes, BlockStateProvider barrier, BlockStateProvider topBarrier, int x, int z) {
+	public DeathSwapMapConfig(Holder<WorldPreset> worldPreset, ResourceKey<LevelStem> dimensionOptions, Optional<HolderSet<Biome>> excludedBiomes, BlockStateProvider barrier, BlockStateProvider topBarrier, int x, int z) {
 		this.worldPreset = worldPreset;
 		this.dimensionOptions = dimensionOptions;
 		this.excludedBiomes = excludedBiomes;
@@ -59,8 +59,8 @@ public class DeathSwapMapConfig {
 		this.z = z;
 	}
 
-	public DimensionOptions getDimensionOptions() {
-		DimensionOptionsRegistryHolder registryHolder = this.worldPreset.value().createDimensionsRegistryHolder();
+	public LevelStem getDimensionOptions() {
+		WorldDimensions registryHolder = this.worldPreset.value().createWorldDimensions();
 		return registryHolder.dimensions().get(this.dimensionOptions);
 	}
 
@@ -88,25 +88,25 @@ public class DeathSwapMapConfig {
 		return this.chunkGenerator;
 	}
 
-	private boolean isIncludedBiome(Pair<NoiseHypercube, RegistryEntry<Biome>> pair) {
+	private boolean isIncludedBiome(Pair<ParameterPoint, Holder<Biome>> pair) {
 		return this.excludedBiomes.isEmpty() || !this.excludedBiomes.get().contains(pair.getSecond());
 	}
 
 	private ChunkGenerator createChunkGenerator() {
-		DimensionOptions dimensionOptions = this.getDimensionOptions();
+		LevelStem dimensionOptions = this.getDimensionOptions();
 
 		if (this.excludedBiomes.isPresent()) {
-			if (dimensionOptions.chunkGenerator() instanceof NoiseChunkGenerator noiseChunkGenerator) {
+			if (dimensionOptions.generator() instanceof NoiseBasedChunkGenerator noiseChunkGenerator) {
 				if (noiseChunkGenerator.getBiomeSource() instanceof MultiNoiseBiomeSource biomeSource) {
-					List<Pair<NoiseHypercube, RegistryEntry<Biome>>> entries = biomeSource.getBiomeEntries()
-						.getEntries()
+					List<Pair<ParameterPoint, Holder<Biome>>> entries = biomeSource.parameters()
+						.values()
 						.stream()
 						.filter(this::isIncludedBiome)
 						.toList();
 
-					MultiNoiseBiomeSource newBiomeSource = MultiNoiseBiomeSource.create(new MultiNoiseUtil.Entries<>(entries));
+					MultiNoiseBiomeSource newBiomeSource = MultiNoiseBiomeSource.createFromList(new Climate.ParameterList<>(entries));
 
-					return new NoiseChunkGenerator(newBiomeSource, noiseChunkGenerator.getSettings());
+					return new NoiseBasedChunkGenerator(newBiomeSource, noiseChunkGenerator.generatorSettings());
 				}
 
 				throw new IllegalArgumentException("Cannot exclude biomes from unsupported biome source");
@@ -115,6 +115,6 @@ public class DeathSwapMapConfig {
 			throw new IllegalArgumentException("Cannot exclude biomes from unsupported chunk generator");
 		}
 
-		return dimensionOptions.chunkGenerator();
+		return dimensionOptions.generator();
 	}
 }
