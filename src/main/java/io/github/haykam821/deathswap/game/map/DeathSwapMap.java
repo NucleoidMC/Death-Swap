@@ -3,6 +3,7 @@ package io.github.haykam821.deathswap.game.map;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -45,7 +46,7 @@ public final class DeathSwapMap {
 		while (pos.getY() > bottomY) {
 			if (chunk.getBlockState(pos).isAir()) {
 				air += 1;
-			} else if (air > EntityType.PLAYER.getHeight()) {
+			} else if (air > EntityTypes.PLAYER.getHeight()) {
 				air = 0;
 				break;
 			} else {
