@@ -4,11 +4,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.github.haykam821.deathswap.game.phase.DeathSwapActivePhase;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import xyz.nucleoid.plasmid.api.game.player.PlayerIterable;
 import xyz.nucleoid.plasmid.api.util.PlayerRef;
 
@@ -17,17 +17,17 @@ public class EliminationCollector {
 	private static final int STAY_TICKS = 10;
 	private static final int FADE_OUT_TICKS = 70;
 
-	private static final Formatting CONTINUE_COLOR = Formatting.GREEN;
-	private static final Formatting ELIMINATION_COLOR = Formatting.RED;
+	private static final ChatFormatting CONTINUE_COLOR = ChatFormatting.GREEN;
+	private static final ChatFormatting ELIMINATION_COLOR = ChatFormatting.RED;
 
-	private static final Text CONTINUE_TITLE = createText("title", CONTINUE_COLOR, true);
-	private static final Text CONTINUE_SUBTITLE = createText("continue.subtitle", CONTINUE_COLOR, false);
+	private static final Component CONTINUE_TITLE = createText("title", CONTINUE_COLOR, true);
+	private static final Component CONTINUE_SUBTITLE = createText("continue.subtitle", CONTINUE_COLOR, false);
 
-	private static final Text ELIMINATION_TITLE = createText("title", ELIMINATION_COLOR, true);
-	private static final Text ELIMINATION_SUBTITLE_SINGULAR = createText("elimination.subtitle.singular", ELIMINATION_COLOR, false);
+	private static final Component ELIMINATION_TITLE = createText("title", ELIMINATION_COLOR, true);
+	private static final Component ELIMINATION_SUBTITLE_SINGULAR = createText("elimination.subtitle.singular", ELIMINATION_COLOR, false);
 
-	private static final SoundEvent CONTINUE_SOUND = SoundEvents.ENTITY_PLAYER_LEVELUP;
-	private static final SoundEvent ELIMINATION_SOUND = SoundEvents.ENTITY_WITHER_SPAWN;
+	private static final SoundEvent CONTINUE_SOUND = SoundEvents.PLAYER_LEVELUP;
+	private static final SoundEvent ELIMINATION_SOUND = SoundEvents.WITHER_SPAWN;
 
 	private final DeathSwapActivePhase phase;
 
@@ -46,7 +46,7 @@ public class EliminationCollector {
 	/**
 	 * @return whether the player's elimination display was integrated into an active elimination collector
 	 */
-	public boolean add(ServerPlayerEntity player) {
+	public boolean add(ServerPlayer player) {
 		if (this.ticksRemaining > 0) {
 			this.eliminated.add(PlayerRef.of(player));
 			return true;
@@ -72,11 +72,11 @@ public class EliminationCollector {
 		players.playSound(this.getSound());
 	}
 
-	private Text getTitle() {
+	private Component getTitle() {
 		return this.isContinue() ? CONTINUE_TITLE : ELIMINATION_TITLE;
 	}
 
-	private Text getSubtitle() {
+	private Component getSubtitle() {
 		if (this.isContinue()) {
 			return CONTINUE_SUBTITLE;
 		}
@@ -98,9 +98,9 @@ public class EliminationCollector {
 		return "EliminationCollector{phase=" + this.phase + ", eliminated=" + this.eliminated + ", ticksRemaining=" + this.ticksRemaining + "}";
 	}
 
-	private static Text createText(String keySuffix, Formatting formatting, boolean title, Object... args) {
-		return Text.translatable("text.deathswap.elimination_collector." + keySuffix, args).styled(style -> {
-			return style.withFormatting(formatting).withBold(title);
+	private static Component createText(String keySuffix, ChatFormatting formatting, boolean title, Object... args) {
+		return Component.translatable("text.deathswap.elimination_collector." + keySuffix, args).withStyle(style -> {
+			return style.applyFormat(formatting).withBold(title);
 		});
 	}
 }

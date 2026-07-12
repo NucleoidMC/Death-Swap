@@ -10,20 +10,20 @@ import com.google.common.collect.Iterables;
 
 import io.github.haykam821.deathswap.game.phase.DeathSwapActivePhase;
 import net.minecraft.SharedConstants;
-import net.minecraft.entity.boss.BossBar;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.world.BossEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import xyz.nucleoid.plasmid.api.game.common.GlobalWidgets;
 import xyz.nucleoid.plasmid.api.game.common.widget.BossBarWidget;
 
 public class DeathSwapTimer {
-	private static final BossBar.Style STYLE = BossBar.Style.PROGRESS;
-	private static final BossBar.Color NO_SWAP_COLOR = BossBar.Color.GREEN;
-	private static final BossBar.Color WARNING_COLOR = BossBar.Color.YELLOW;
-	private static final Formatting NO_SWAP_FORMATTING = Formatting.GREEN;
-	private static final Formatting WARNING_FORMATTING = Formatting.YELLOW;
-	private static final Text NO_SWAP_TITLE = Text.translatable("text.deathswap.timer.no_swap");
+	private static final BossEvent.BossBarOverlay STYLE = BossEvent.BossBarOverlay.PROGRESS;
+	private static final BossEvent.BossBarColor NO_SWAP_COLOR = BossEvent.BossBarColor.GREEN;
+	private static final BossEvent.BossBarColor WARNING_COLOR = BossEvent.BossBarColor.YELLOW;
+	private static final ChatFormatting NO_SWAP_FORMATTING = ChatFormatting.GREEN;
+	private static final ChatFormatting WARNING_FORMATTING = ChatFormatting.YELLOW;
+	private static final Component NO_SWAP_TITLE = Component.translatable("text.deathswap.timer.no_swap");
 
 	private static final DecimalFormat MINUTES_FORMAT = new DecimalFormat("#.#", new DecimalFormatSymbols(Locale.ROOT));
 	private final DeathSwapActivePhase phase;
@@ -56,10 +56,10 @@ public class DeathSwapTimer {
 		// Collect new positions for each player
 		List<SwapData> swapData = new ArrayList<>(this.phase.getPlayers().size());
 
-		ServerPlayerEntity previousPlayer = Iterables.getLast(this.phase.getPlayers());
+		ServerPlayer previousPlayer = Iterables.getLast(this.phase.getPlayers());
 		swapData.add(SwapData.from(previousPlayer));
 		
-		for (ServerPlayerEntity player : this.phase.getPlayers()) {
+		for (ServerPlayer player : this.phase.getPlayers()) {
 			// Ensure positions are off by one
 			if (player != previousPlayer) {
 				swapData.add(SwapData.from(player));
@@ -68,11 +68,11 @@ public class DeathSwapTimer {
 
 		// Teleport players to their new positions
 		int index = 0;
-		for (ServerPlayerEntity player : this.phase.getPlayers()) {
+		for (ServerPlayer player : this.phase.getPlayers()) {
 			swapData.get(index).apply(player);
 
-			Text message = Text.translatable("text.deathswap.timer.swap", previousPlayer.getDisplayName()).formatted(NO_SWAP_FORMATTING);
-			player.sendMessage(message, true);
+			Component message = Component.translatable("text.deathswap.timer.swap", previousPlayer.getDisplayName()).withStyle(NO_SWAP_FORMATTING);
+			player.sendSystemMessage(message, true);
 
 			previousPlayer = player;
 			index += 1;
@@ -97,30 +97,30 @@ public class DeathSwapTimer {
 		this.setBarTitle(this.getWarning(), WARNING_FORMATTING);
 	}
 
-	private Text getWarning() {
+	private Component getWarning() {
 		int seconds = this.swapTicks / SharedConstants.TICKS_PER_SECOND;
 
 		if (seconds >= 60) {
 			double minutes = seconds / 60d;
 
 			if (minutes > 1.05) {
-				return Text.translatable("text.deathswap.timer.warning.minutes", MINUTES_FORMAT.format(minutes));
+				return Component.translatable("text.deathswap.timer.warning.minutes", MINUTES_FORMAT.format(minutes));
 			} else {
-				return Text.translatable("text.deathswap.timer.warning.minute");
+				return Component.translatable("text.deathswap.timer.warning.minute");
 			}
 		} else if (seconds == 1) {
-			return Text.translatable("text.deathswap.timer.warning.second");
+			return Component.translatable("text.deathswap.timer.warning.second");
 		} else {
-			return Text.translatable("text.deathswap.timer.warning.seconds", seconds);
+			return Component.translatable("text.deathswap.timer.warning.seconds", seconds);
 		}
 	}
 
-	private void setBarTitle(Text customText, Formatting formatting) {
+	private void setBarTitle(Component customText, ChatFormatting formatting) {
 		this.widget.setTitle(this.getBarTitle(customText, formatting));
 	}
 
-	private Text getBarTitle(Text customText, Formatting formatting) {
-		Text gameName = Text.translatable("gameType.deathswap.death_swap").formatted(Formatting.BOLD);
-		return Text.empty().append(gameName).append(" - ").append(customText).formatted(formatting);
+	private Component getBarTitle(Component customText, ChatFormatting formatting) {
+		Component gameName = Component.translatable("gameType.deathswap.death_swap").withStyle(ChatFormatting.BOLD);
+		return Component.empty().append(gameName).append(" - ").append(customText).withStyle(formatting);
 	}
 }
