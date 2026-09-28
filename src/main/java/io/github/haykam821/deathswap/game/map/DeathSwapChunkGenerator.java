@@ -1,8 +1,11 @@
 package io.github.haykam821.deathswap.game.map;
 
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.core.BlockPos;
@@ -22,6 +25,7 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.NoiseColumn;
 import net.minecraft.world.level.levelgen.RandomState;
+import org.jspecify.annotations.Nullable;
 import xyz.nucleoid.fantasy.util.ChunkGeneratorSettingsProvider;
 import xyz.nucleoid.plasmid.api.game.level.generator.GameChunkGenerator;
 
@@ -76,18 +80,12 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 	}
 
 	@Override
-	public CompletableFuture<ChunkAccess> fillFromNoise(Blender blender, RandomState noiseConfig, StructureManager structures, ChunkAccess chunk) {
+	public CompletableFuture<ChunkAccess> buildTerrain(ChunkAccess chunk, Blender blender, RandomState randomState, StructureManager structureManager, BiomeManager biomeManager, @Nullable WorldGenRegion carverBiomeRegion, Set<Holder<Biome>> possibleBiomes) {
 		if (this.isChunkWithinArea(chunk)) {
-			return this.chunkGenerator.fillFromNoise(blender, noiseConfig, structures, chunk);
+			return this.chunkGenerator.buildTerrain(chunk, blender, randomState, structureManager, biomeManager, carverBiomeRegion, possibleBiomes);
 		}
-		return super.fillFromNoise(blender, noiseConfig, structures, chunk);
-	}
 
-	@Override
-	public void buildSurface(WorldGenRegion region, StructureManager structures, RandomState noiseConfig, ChunkAccess chunk) {
-		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.buildSurface(region, structures, noiseConfig, chunk);
-		}
+		return super.buildTerrain(chunk, blender, randomState, structureManager, biomeManager, carverBiomeRegion, possibleBiomes);
 	}
 
 	@Override
@@ -172,13 +170,6 @@ public final class DeathSwapChunkGenerator extends GameChunkGenerator implements
 
 	private BlockState getBarrierState(WorldGenLevel level, RandomSource random, BlockPos pos) {
 		return this.mapConfig.getBarrier().getState(level, random, pos);
-	}
-
-	@Override
-	public void applyCarvers(WorldGenRegion region, long seed, RandomState noiseConfig, BiomeManager access, StructureManager structures, ChunkAccess chunk) {
-		if (this.isChunkWithinArea(chunk)) {
-			this.chunkGenerator.applyCarvers(region, seed, noiseConfig, access, structures, chunk);
-		}
 	}
 
 	@Override

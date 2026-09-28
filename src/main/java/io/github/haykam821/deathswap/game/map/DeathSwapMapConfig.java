@@ -8,13 +8,13 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import io.github.haykam821.deathswap.Main;
+import net.minecraft.core.registries.codec.RegistryCodecs;
+import net.minecraft.core.registries.codec.RegistryFixedCodec;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.core.RegistryCodecs;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
-import net.minecraft.resources.RegistryFixedCodec;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.biome.Climate;
@@ -31,9 +31,9 @@ public class DeathSwapMapConfig {
 		return instance.group(
 			RegistryFixedCodec.create(Registries.WORLD_PRESET).fieldOf("preset").forGetter(mapConfig -> mapConfig.worldPreset),
 			ResourceKey.codec(Registries.LEVEL_STEM).optionalFieldOf("dimension_options", LevelStem.OVERWORLD).forGetter(mapConfig -> mapConfig.dimensionOptions),
-			RegistryCodecs.homogeneousList(Registries.BIOME).optionalFieldOf("excluded_biomes").forGetter(mapConfig -> mapConfig.excludedBiomes),
-			BlockStateProvider.CODEC.optionalFieldOf("barrier", BlockStateProvider.simple(Blocks.BARRIER)).forGetter(DeathSwapMapConfig::getBarrier),
-			BlockStateProvider.CODEC.optionalFieldOf("top_barrier", BlockStateProvider.simple(Main.BARRIER_AIR)).forGetter(DeathSwapMapConfig::getTopBarrier),
+			RegistryCodecs.holderSet(Registries.BIOME).optionalFieldOf("excluded_biomes").forGetter(mapConfig -> mapConfig.excludedBiomes),
+			BlockStateProvider.DIRECT_CODEC.optionalFieldOf("barrier", BlockStateProvider.of(Blocks.BARRIER)).forGetter(DeathSwapMapConfig::getBarrier),
+			BlockStateProvider.DIRECT_CODEC.optionalFieldOf("top_barrier", BlockStateProvider.of(Main.BARRIER_AIR)).forGetter(DeathSwapMapConfig::getTopBarrier),
 			Codec.INT.optionalFieldOf("x", 32).forGetter(DeathSwapMapConfig::getX),
 			Codec.INT.optionalFieldOf("z", 32).forGetter(DeathSwapMapConfig::getZ)
 		).apply(instance, DeathSwapMapConfig::new);

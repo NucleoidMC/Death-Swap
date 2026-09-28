@@ -10,15 +10,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.Blocks;
 
 public class BarrierAirBlock extends AirBlock implements PolymerBlock {
-	public static final MapCodec<AirBlock> CODEC = Block.simpleCodec(BarrierAirBlock::new);
-
 	public BarrierAirBlock(Block.Properties settings) {
 		super(settings);
-	}
-
-	@Override
-	public MapCodec<AirBlock> codec() {
-		return CODEC;
 	}
 
 	@Override
